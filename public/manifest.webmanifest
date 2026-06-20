@@ -1,0 +1,25 @@
+{
+  "name": "LMS TPQ - Portal Belajar Santri",
+  "short_name": "LMS TPQ",
+  "description": "Progressive Web App untuk Taman Pendidikan Al-Qur'an (TPQ) Al-Istiqomah",
+  "start_url": "/login",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f0f4f1",
+  "theme_color": "#064e3b",
+  "status_bar": "default",
+  "icons": [
+    {
+      "src": "/images/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
