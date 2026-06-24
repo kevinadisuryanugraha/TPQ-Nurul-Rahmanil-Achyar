@@ -28,7 +28,10 @@ class AppServiceProvider extends ServiceProvider
                 'logo_tpq' => '/images/logo-default.png',
                 'deskripsi_tpq' => 'Taman Pendidikan Al-Qur\'an Al-Istiqomah',
                 'tahun_ajaran' => '2025/2026',
-                'sesi' => ['Pagi', 'Sore', 'Malam']
+                'sesi' => ['Pagi', 'Sore', 'Malam'],
+                'alamat_tpq' => '',
+                'telepon_tpq' => '',
+                'nama_kepala_tpq' => '',
             ];
             if (\Illuminate\Support\Facades\Storage::exists($settingsFile)) {
                 try {

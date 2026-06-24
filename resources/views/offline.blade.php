@@ -47,7 +47,7 @@
                 class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-3 rounded-xl transition text-xs shadow-sm">
                 Coba Hubungkan Kembali
             </button>
-            <a href="/murid/dashboard"
+            <a href="{{ route('murid.dashboard') }}"
                 class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 rounded-xl transition text-xs border border-gray-250 block">
                 Kembali ke Beranda
             </a>

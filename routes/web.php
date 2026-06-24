@@ -22,6 +22,7 @@ use App\Http\Controllers\Murid\CeritaController as MuridCerita;
 use App\Http\Controllers\Murid\PanduanController as MuridPanduan;
 use App\Http\Controllers\Murid\NilaiController as MuridNilai;
 use App\Http\Controllers\Murid\AbsensiController as MuridAbsensi;
+use App\Http\Controllers\Murid\AsmaulHusnaController as MuridAsmaulHusna;
 use App\Http\Controllers\Murid\PengumumanController as MuridPengumuman;
 use App\Http\Controllers\Public\LandingController;
 use App\Http\Controllers\Public\PendaftaranController;
@@ -167,5 +168,6 @@ Route::prefix('murid')->middleware(['auth:web', 'murid'])->group(function () {
     Route::get('/panduan/{id}', [MuridPanduan::class, 'show'])->name('murid.panduan.show');
     Route::get('/nilai', [MuridNilai::class, 'index'])->name('murid.nilai.index');
     Route::get('/absensi', [MuridAbsensi::class, 'index'])->name('murid.absensi.index');
+    Route::get('/asmaul-husna', [MuridAsmaulHusna::class, 'index'])->name('murid.asmaul-husna.index');
     Route::get('/pengumuman', [MuridPengumuman::class, 'index'])->name('murid.pengumuman.index');
 });

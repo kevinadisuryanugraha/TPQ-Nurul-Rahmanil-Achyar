@@ -1,58 +1,170 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# LMS TPQ — Sistem Manajemen Pembelajaran untuk Taman Pendidikan Al-Qur'an
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+[![PHP](https://img.shields.io/badge/PHP-^8.3-777BB4?logo=php&logoColor=white)](https://php.net)
+[![Laravel](https://img.shields.io/badge/Laravel-^13.8-FF2D20?logo=laravel&logoColor=white)](https://laravel.com)
+[![Livewire](https://img.shields.io/badge/Livewire-^4.3-FB70A9?logo=livewire&logoColor=white)](https://livewire.laravel.com)
+[![License](https://img.shields.io/badge/license-MIT-blue)](https://opensource.org/licenses/MIT)
 
-## About Laravel
+**LMS TPQ** is a comprehensive Learning Management System built for Taman Pendidikan Al-Qur'an (TPQ) — Islamic Quranic preschools in Indonesia. It combines a public landing page, an admin management panel, and a student portal into a single Progressive Web App.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+> **One platform for the whole TPQ ecosystem:** recruit students via the landing page, manage learning operations through the admin panel, and let students access digital content from anywhere — even offline.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Features
 
-## Learning Laravel
+### 🏫 Public Landing Page
+- Single-page scrollable profile with hero, programs, gallery, testimonials, and contact sections
+- Online student registration (PSB) with approval workflow
+- SEO-optimized for local discovery
+- WhatsApp & phone click-to-contact
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### 👨‍💼 Admin Panel (Livewire 4)
+- **Student management** — CRUD, level promotion/demotion, password reset
+- **Attendance tracking** — daily check-in with monthly recaps
+- **4-Domain assessment** — Reading (*baca*), Memorization (*hafalan*), Writing (*tulis*), Practice (*praktik*)
+- **Content management** — Doa, Hadist, Stories (*cerita*), Practice guides (*panduan praktik*) with TipTap rich editor
+- **Announcements** — broadcast to all students
+- **Reports & exports** — PDF (DomPDF) and Excel (Maatwebsite) with filters
+- **Landing page CMS** — manage gallery, testimonials, staff profiles, and PSB data
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 🎒 Student Portal (PWA)
+- **Quran** reader — per-surah browsing
+- **Doa & Hadist** — daily prayers and prophetic traditions
+- **Stories & Guides** — illustrated moral stories and step-by-step practice guides
+- **Asmaul Husna** — the 99 names of Allah
+- **Grades & attendance** — view own scores and attendance history
+- **Announcements** — read school-wide announcements
+- **Works offline** — fully functional without internet connection
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+### 🔐 Role-Based Access
+| Role | Scope |
+|---|---|
+| **Superadmin** | System settings, manage admin accounts |
+| **Admin (Pengurus)** | All daily operations (students, attendance, assessments, content, reports) |
+| **Murid (Student)** | Portal content, own grades & attendance |
 
-## Agentic Development
+---
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| **Framework** | Laravel 13.x |
+| **Language** | PHP ^8.3 |
+| **Admin UI** | Livewire 4 + Alpine.js 3 |
+| **Student Portal** | Blade + Alpine.js 3 |
+| **Styling** | Tailwind CSS 3 + PostCSS |
+| **Rich Editor** | TipTap (stories & guides) |
+| **Assets** | Vite 8 |
+| **Database** | MySQL / MariaDB / SQLite (testing) |
+| **PDF Export** | barryvdh/laravel-dompdf |
+| **Excel Export** | maatwebsite/excel ^3.1 |
+| **Image Processing** | intervention/image ^4.1 |
+| **RBAC** | spatie/laravel-permission |
+| **HTML Sanitization** | mews/purifier |
+| **PWA** | Custom service worker (no npm package) |
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- PHP ^8.3 with extensions: `pdo_mysql`, `mbstring`, `xml`, `bcmath`, `gd`, `zip`
+- Composer 2.x
+- Node.js 18+ (for Vite asset bundling)
+- MySQL / MariaDB (or SQLite for development)
+
+### Installation
 
 ```bash
-composer require laravel/boost --dev
+# 1. Clone the repository
+git clone https://github.com/kevinadisuryanugraha/TPQ-Nurul-Rahmanil-Achyar.git
+cd TPQ-Nurul-Rahmanil-Achyar
 
-php artisan boost:install
+# 2. Full automated setup
+composer run setup
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+The `setup` script handles everything:
+```
+composer install  →  copy .env  →  key:generate  →  migrate --force  →  npm install  →  npm run build
+```
 
-## Contributing
+### Development Server
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```bash
+# Run all services concurrently (PHP server, queue worker, logs, Vite HMR)
+composer run dev
+```
 
-## Code of Conduct
+This starts:
+- `php artisan serve` — development HTTP server
+- `php artisan queue:listen` — queue worker
+- `php artisan pail` — real-time log viewer
+- `npm run dev` — Vite hot module replacement
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Testing
 
-## Security Vulnerabilities
+```bash
+# Run full test suite (clears config first)
+composer run test
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+# Run a single test
+php artisan test --filter=SomeTest
+
+# Run specific test suite
+php artisan test --testsuite=Feature
+php artisan test --testsuite=Unit
+```
+
+Tests use SQLite `:memory:` database — no external database required.
+
+### Production Build
+
+```bash
+npm run build
+php artisan storage:link     # if not already linked
+```
+
+---
+
+## Architecture
+
+```mermaid
+graph TD
+    A[Public Landing Page] -->|/daftar| B(PSB Registration)
+    C[Admin Panel] -->|/admin/*| D{Admin Auth}
+    E[Student Portal] -->|/murid/*| F{Murid Auth}
+    D --> G[Superadmin / Admin]
+    F --> H[Student]
+```
+
+- **All routes** in a single `routes/web.php` (no API routes, no route file splitting)
+- **Two authentication guards**: `admin` (admins table) and `web` (users/students table)
+- **Custom middleware**: `superadmin`, `admin`, `murid` — aliased in `bootstrap/app.php`
+- **Admin Panel** uses Livewire 4 (no offline support — intended for internal use)
+- **Student Portal** is offline-capable via custom service worker at `public/sw.js`
+
+---
+
+## Seeder Data
+
+```bash
+php artisan migrate --seed
+```
+
+Runs in order: **LevelSeeder → DefaultAdminSeeder → QuranSeeder → DoaSeeder → HadistSeeder → LandingPageSeeder → AsmaulHusnaSeeder**
+
+---
+
+## Project Status
+
+This is an active project in development. The PRD documents (`PRD_LMS_TPQ.md`, `PRD_LandingPage_TPQ.md`) serve as design references — actual implementation may differ.
+
+---
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+[MIT](https://opensource.org/licenses/MIT) — open source and free for any TPQ to use and adapt.

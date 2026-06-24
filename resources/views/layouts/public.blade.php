@@ -31,6 +31,11 @@
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
+    <!-- Manifest & Icons for PWA -->
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="apple-touch-icon" href="/images/icon-192.png">
+    <meta name="theme-color" content="#064e3b">
+
     <!-- CSS & Scripts via Vite -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
@@ -240,6 +245,17 @@
             </div>
         </div>
     </footer>
+
+    <!-- PWA Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((reg) => console.log('Service Worker registered successfully on landing page:', reg.scope))
+                    .catch((err) => console.log('Service Worker registration failed:', err));
+            });
+        }
+    </script>
 
     @yield('scripts')
 </body>

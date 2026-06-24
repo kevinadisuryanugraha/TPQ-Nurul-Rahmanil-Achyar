@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             DoaSeeder::class,
             HadistSeeder::class,
             LandingPageSeeder::class,
+            AsmaulHusnaSeeder::class,
         ]);
     }
 }

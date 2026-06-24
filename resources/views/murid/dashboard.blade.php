@@ -82,14 +82,25 @@
                 </div>
             </a>
 
+            <!-- Asmaul Husna -->
+            <a href="{{ route('murid.asmaul-husna.index') }}" class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center space-x-3 hover:shadow transition">
+                <div class="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-kaaba"></i>
+                </div>
+                <div>
+                    <h4 class="font-bold text-xs text-gray-900 leading-tight">Asmaul Husna</h4>
+                    <span class="text-[9px] text-gray-400">99 Nama Allah</span>
+                </div>
+            </a>
+
             <!-- Panduan -->
-            <a href="{{ route('murid.panduan.index') }}" class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center space-x-3 col-span-2 hover:shadow transition">
+            <a href="{{ route('murid.panduan.index') }}" class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center space-x-3 hover:shadow transition">
                 <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-lg">
                     <i class="fa-solid fa-compass"></i>
                 </div>
                 <div>
-                    <h4 class="font-bold text-xs text-gray-900 leading-tight">Panduan Praktik Fiqh</h4>
-                    <span class="text-[9px] text-gray-400">Panduan langkah-demi-langkah wudhu & shalat</span>
+                    <h4 class="font-bold text-xs text-gray-900 leading-tight">Panduan Praktik</h4>
+                    <span class="text-[9px] text-gray-400">Wudhu & Shalat</span>
                 </div>
             </a>
         </div>

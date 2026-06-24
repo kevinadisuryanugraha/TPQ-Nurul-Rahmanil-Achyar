@@ -62,7 +62,6 @@
             border-radius: 4px;
         }
     </style>
-    @livewireStyles
 </head>
 <body class="antialiased">
     <div class="app-container flex flex-col">
@@ -161,7 +160,7 @@
             </a>
 
             <!-- Doa / Hadist -->
-            <a href="{{ route('murid.doa.index') }}" class="flex flex-col items-center justify-center flex-1 py-1 {{ request()->routeIs('murid.doa.*') || request()->routeIs('murid.hadist.*') || request()->routeIs('murid.cerita.*') || request()->routeIs('murid.panduan.*') ? 'text-emerald-700 font-bold' : 'text-gray-400 hover:text-gray-600' }}">
+            <a href="{{ route('murid.doa.index') }}" class="flex flex-col items-center justify-center flex-1 py-1 {{ request()->routeIs('murid.doa.*') || request()->routeIs('murid.hadist.*') || request()->routeIs('murid.cerita.*') || request()->routeIs('murid.panduan.*') || request()->routeIs('murid.asmaul-husna.*') ? 'text-emerald-700 font-bold' : 'text-gray-400 hover:text-gray-600' }}">
                 <i class="fa-solid fa-compass text-lg mb-1"></i>
                 <span class="text-[9px]">Perpustakaan</span>
             </a>
@@ -226,6 +225,5 @@
             });
         }
     </script>
-    @livewireScripts
 </body>
 </html>

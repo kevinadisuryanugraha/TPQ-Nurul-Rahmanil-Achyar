@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Models\Admin;
+use App\Models\Level;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -17,38 +19,72 @@ class AuthenticationTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_users_can_authenticate_using_the_login_screen(): void
+    public function test_student_can_login_with_username(): void
     {
-        $user = User::factory()->create();
+        $level = Level::factory()->create(['urutan' => 1, 'nama' => 'Pra-Iqra']);
+        $user = User::factory()->create([
+            'username' => 'teststudent',
+            'password' => bcrypt('password'),
+            'current_level_id' => $level->id,
+        ]);
 
         $response = $this->post('/login', [
-            'email' => $user->email,
+            'login' => 'teststudent',
             'password' => 'password',
         ]);
 
-        $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertRedirect('/murid/dashboard');
+        $this->assertAuthenticatedAs($user, 'web');
     }
 
-    public function test_users_can_not_authenticate_with_invalid_password(): void
+    public function test_student_cannot_login_with_invalid_password(): void
     {
-        $user = User::factory()->create();
+        $level = Level::factory()->create(['urutan' => 1, 'nama' => 'Pra-Iqra']);
+        User::factory()->create([
+            'username' => 'teststudent',
+            'password' => bcrypt('password'),
+            'current_level_id' => $level->id,
+        ]);
 
         $this->post('/login', [
-            'email' => $user->email,
+            'login' => 'teststudent',
             'password' => 'wrong-password',
         ]);
 
         $this->assertGuest();
     }
 
-    public function test_users_can_logout(): void
+    public function test_admin_can_login_with_email(): void
     {
-        $user = User::factory()->create();
+        $admin = Admin::create([
+            'nama' => 'Test Admin',
+            'email' => 'admin@test.com',
+            'password' => bcrypt('password'),
+            'role' => 'admin',
+            'is_active' => true,
+        ]);
 
-        $response = $this->actingAs($user)->post('/logout');
+        $response = $this->post('/login', [
+            'login' => 'admin@test.com',
+            'password' => 'password',
+        ]);
+
+        $response->assertRedirect('/admin/dashboard');
+        $this->assertAuthenticatedAs($admin, 'admin');
+    }
+
+    public function test_user_can_logout(): void
+    {
+        $level = Level::factory()->create(['urutan' => 1, 'nama' => 'Pra-Iqra']);
+        $user = User::factory()->create([
+            'username' => 'teststudent',
+            'password' => bcrypt('password'),
+            'current_level_id' => $level->id,
+        ]);
+
+        $response = $this->actingAs($user, 'web')->post('/logout');
 
         $this->assertGuest();
-        $response->assertRedirect('/');
+        $response->assertRedirect('/login');
     }
 }
