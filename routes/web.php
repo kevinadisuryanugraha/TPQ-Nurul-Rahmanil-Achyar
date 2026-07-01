@@ -129,6 +129,13 @@ Route::prefix('admin')->middleware(['auth:admin', 'admin'])->group(function () {
     Route::put('/konten/langkah/{id}', [AdminKonten::class, 'langkahUpdate'])->name('admin.konten.langkah.update');
     Route::delete('/konten/langkah/{id}', [AdminKonten::class, 'langkahDestroy'])->name('admin.konten.langkah.destroy');
 
+    // Flashcard CMS management routes
+    Route::resource('/konten/flashcard', \App\Http\Controllers\Admin\FlashcardController::class)->names('admin.konten.flashcard');
+    Route::get('/konten/flashcard/{deck_id}/item', [\App\Http\Controllers\Admin\FlashcardController::class, 'itemsIndex'])->name('admin.konten.flashcard.items.index');
+    Route::post('/konten/flashcard/{deck_id}/item', [\App\Http\Controllers\Admin\FlashcardController::class, 'itemsStore'])->name('admin.konten.flashcard.items.store');
+    Route::put('/konten/flashcard/item/{item_id}', [\App\Http\Controllers\Admin\FlashcardController::class, 'itemsUpdate'])->name('admin.konten.flashcard.items.update');
+    Route::delete('/konten/flashcard/item/{item_id}', [\App\Http\Controllers\Admin\FlashcardController::class, 'itemsDestroy'])->name('admin.konten.flashcard.items.destroy');
+
     // Announcement
     Route::resource('/pengumuman', AdminPengumuman::class)->names('admin.pengumuman');
 
