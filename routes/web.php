@@ -177,4 +177,6 @@ Route::prefix('murid')->middleware(['auth:web', 'murid'])->group(function () {
     Route::get('/absensi', [MuridAbsensi::class, 'index'])->name('murid.absensi.index');
     Route::get('/asmaul-husna', [MuridAsmaulHusna::class, 'index'])->name('murid.asmaul-husna.index');
     Route::get('/pengumuman', [MuridPengumuman::class, 'index'])->name('murid.pengumuman.index');
+    Route::get('/flashcard', [\App\Http\Controllers\Murid\FlashcardController::class, 'index'])->name('murid.flashcard.index');
+    Route::get('/flashcard/{id}', [\App\Http\Controllers\Murid\FlashcardController::class, 'show'])->name('murid.flashcard.show');
 });

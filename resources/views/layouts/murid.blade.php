@@ -165,6 +165,12 @@
                 <span class="text-[9px]">Perpustakaan</span>
             </a>
 
+            <!-- Latihan / Flashcards -->
+            <a href="{{ route('murid.flashcard.index') }}" class="flex flex-col items-center justify-center flex-1 py-1 {{ request()->routeIs('murid.flashcard.*') ? 'text-emerald-700 font-bold' : 'text-gray-400 hover:text-gray-600' }}">
+                <i class="fa-solid fa-clone text-lg mb-1"></i>
+                <span class="text-[9px]">Latihan</span>
+            </a>
+
             <!-- Grades / Nilai -->
             <a href="{{ route('murid.nilai.index') }}" class="flex flex-col items-center justify-center flex-1 py-1 {{ request()->routeIs('murid.nilai.index') ? 'text-emerald-700 font-bold' : 'text-gray-400 hover:text-gray-600' }}">
                 <i class="fa-solid fa-star text-lg mb-1"></i>
