@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             HadistSeeder::class,
             LandingPageSeeder::class,
             AsmaulHusnaSeeder::class,
+            FlashcardDeckSeeder::class,
         ]);
     }
 }
