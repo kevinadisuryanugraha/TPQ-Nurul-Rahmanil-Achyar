@@ -50,27 +50,93 @@
         .gradient-brand {
             background: linear-gradient(135deg, #064e3b 0%, #022c22 100%);
         }
-        .text-brand-gold {
-            color: #d97706;
+        .text-brand-gold  { color: #d97706; }
+        .bg-brand-gold    { background-color: #d97706; }
+        .border-brand-gold{ border-color: #d97706; }
+        .bg-brand-gold-hover:hover { background-color: #b45309; }
+
+        /* ── Scroll-Reveal Animations ──────────────────────────────── */
+        @media (prefers-reduced-motion: no-preference) {
+            .reveal {
+                opacity: 0;
+                transform: translateY(28px);
+                transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+                            transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            }
+            .reveal.is-visible {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            .reveal-delay-1 { transition-delay: 0.08s; }
+            .reveal-delay-2 { transition-delay: 0.16s; }
+            .reveal-delay-3 { transition-delay: 0.24s; }
+            .reveal-delay-4 { transition-delay: 0.32s; }
         }
-        .bg-brand-gold {
-            background-color: #d97706;
+
+        /* ── Islamic Geometric Pattern (SVG data URI) ──────────────── */
+        .pattern-islamic {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='100'%3E%3Crect width='56' height='100' fill='none'/%3E%3Cpath d='M28 66L0 50V16L28 0l28 16v34L28 66zM28 66v34' stroke='%23ffffff' stroke-width='1' fill='none' stroke-opacity='0.07'/%3E%3Cpath d='M28 0v34M0 16l28 18 28-18M0 50l28-18 28 18' stroke='%23ffffff' stroke-width='1' fill='none' stroke-opacity='0.05'/%3E%3C/svg%3E");
         }
-        .border-brand-gold {
-            border-color: #d97706;
+        .pattern-islamic-light {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='100'%3E%3Crect width='56' height='100' fill='none'/%3E%3Cpath d='M28 66L0 50V16L28 0l28 16v34L28 66zM28 66v34' stroke='%23064e3b' stroke-width='1' fill='none' stroke-opacity='0.04'/%3E%3Cpath d='M28 0v34M0 16l28 18 28-18M0 50l28-18 28 18' stroke='%23064e3b' stroke-width='1' fill='none' stroke-opacity='0.03'/%3E%3C/svg%3E");
         }
-        .bg-brand-gold-hover:hover {
-            background-color: #b45309;
+
+        /* ── Hero counter animation ──────────────────────────────────── */
+        @keyframes countUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .stat-badge { animation: countUp 0.8s cubic-bezier(0.16,1,0.3,1) both; }
+        .stat-badge:nth-child(1) { animation-delay: 0.3s; }
+        .stat-badge:nth-child(2) { animation-delay: 0.45s; }
+        .stat-badge:nth-child(3) { animation-delay: 0.6s; }
+
+        /* ── Nav active indicator ────────────────────────────────────── */
+        .nav-link-active {
+            color: #065f46 !important;
+            position: relative;
+        }
+        .nav-link-active::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #d97706;
+            border-radius: 1px;
+        }
+
+        /* ── Form focus enhancement ──────────────────────────────────── */
+        .input-field:focus {
+            border-color: #059669;
+            box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.15);
+        }
+
+        /* ── Success check animation ─────────────────────────────────── */
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.5); }
+            to   { opacity: 1; transform: scale(1); }
+        }
+        .animate-scale-in {
+            animation: scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        }
+        @keyframes checkPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(5,150,105,0.3); }
+            50%       { box-shadow: 0 0 0 16px rgba(5,150,105,0); }
+        }
+        .animate-check-pulse {
+            animation: checkPulse 2s ease-in-out 0.5s infinite;
         }
     </style>
     @yield('styles')
 </head>
-<body class="text-gray-800 antialiased bg-stone-50/20" x-data="{ mobileMenuOpen: false }">
+<body class="text-gray-800 antialiased bg-stone-50/20" x-data="{ mobileMenuOpen: false, scrolled: false }" @scroll.window="scrolled = window.scrollY > 20">
 
     <!-- Sticky Navigation Bar -->
-    <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-emerald-50/80 shadow-sm transition-all duration-300">
+    <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-emerald-50/80 transition-all duration-300" :class="scrolled ? 'shadow-md' : 'shadow-sm'">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-20">
+            <div class="flex items-center justify-between h-16">
                 <!-- Logo & Brand Name -->
                 <div class="flex items-center space-x-3">
                     <a href="{{ route('landing') }}" class="flex items-center space-x-3">
@@ -251,10 +317,27 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js')
-                    .then((reg) => console.log('Service Worker registered successfully on landing page:', reg.scope))
-                    .catch((err) => console.log('Service Worker registration failed:', err));
+                    .then((reg) => console.log('SW registered:', reg.scope))
+                    .catch((err) => console.log('SW failed:', err));
             });
         }
+    </script>
+
+    <!-- Scroll-Reveal Observer -->
+    <script>
+        (function () {
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+            const observer = new IntersectionObserver(
+                (entries) => entries.forEach(e => {
+                    if (e.isIntersecting) {
+                        e.target.classList.add('is-visible');
+                        observer.unobserve(e.target);
+                    }
+                }),
+                { threshold: 0.12 }
+            );
+            document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+        })();
     </script>
 
     @yield('scripts')

@@ -49,6 +49,9 @@ class LevelController extends Controller
             'catatan' => $request->catatan ?: 'Dinaikkan tingkat oleh ' . auth()->guard('admin')->user()->nama,
         ]);
 
+        // Send WhatsApp level up notification
+        \App\Services\WhatsAppService::sendLevelUpNotification($student, $nextLevel->nama);
+
         return redirect()->route('admin.murid.show', $student->id)
             ->with('success', 'Tingkat level ' . $student->nama_panggilan . ' berhasil dinaikkan ke ' . $nextLevel->nama . '.');
     }
@@ -81,6 +84,9 @@ class LevelController extends Controller
             'tipe' => 'turun',
             'catatan' => $request->catatan ?: 'Diturunkan tingkat oleh ' . auth()->guard('admin')->user()->nama,
         ]);
+
+        // Send WhatsApp level down notification
+        \App\Services\WhatsAppService::sendLevelDownNotification($student, $prevLevel->nama);
 
         return redirect()->route('admin.murid.show', $student->id)
             ->with('success', 'Tingkat level ' . $student->nama_panggilan . ' berhasil diturunkan ke ' . $prevLevel->nama . '.');

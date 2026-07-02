@@ -70,4 +70,26 @@ class FlashcardController extends Controller
 
         return view('murid.flashcard.show', compact('deck', 'cardsData'));
     }
+
+    public function finish(Request $request, $id)
+    {
+        $deck = FlashcardDeck::where('id', $id)->where('is_active', true)->firstOrFail();
+        $student = auth()->user();
+
+        // 1. Increment completions
+        $student->increment('flashcard_completions_count');
+
+        // 2. Add 10 points
+        \App\Services\GamificationService::addPoints($student, 10);
+
+        // 3. Check for flashcard badges
+        $newBadges = \App\Services\GamificationService::checkAndAwardBadges($student, 'flashcard');
+
+        return response()->json([
+            'success' => true,
+            'points_earned' => 10,
+            'total_points' => $student->points,
+            'new_badges' => $newBadges,
+        ]);
+    }
 }

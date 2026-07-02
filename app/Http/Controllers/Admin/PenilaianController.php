@@ -217,6 +217,11 @@ class PenilaianController extends Controller
             'catatan' => $request->catatan,
         ]);
 
+        $student = User::find($request->user_id);
+        if ($student) {
+            \App\Services\GamificationService::checkAndAwardBadges($student, 'tulis');
+        }
+
         return redirect()->route('admin.penilaian.tulis', ['user_id' => $request->user_id])
             ->with('success', 'Penilaian tulis santri berhasil disimpan.');
     }

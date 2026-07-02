@@ -15,6 +15,24 @@
         </div>
     </div>
 
+    <!-- Chart Container -->
+    @if(count($tulises) > 0)
+        @php
+            $chartData = $tulises->take(7)->reverse()->values();
+            $chartLabels = $chartData->map(fn($t) => $t->created_at->translatedFormat('d M'))->toArray();
+            $chartValues = $chartData->pluck('nilai')->toArray();
+        @endphp
+        <div class="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm relative overflow-hidden">
+            <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <i class="fa-solid fa-chart-line text-blue-500 text-xs"></i> 
+                Grafik Perkembangan Ujian Tulis
+            </h4>
+            <div style="height: 140px; width: 100%;">
+                <canvas id="nilaiTulisChart"></canvas>
+            </div>
+        </div>
+    @endif
+
     <!-- Tab buttons -->
     <div class="flex items-center space-x-1.5 bg-gray-150 p-1 rounded-2xl shrink-0">
         <button @click="activeTab = 'baca'" :class="activeTab === 'baca' ? 'bg-white text-emerald-800 font-bold shadow-xs' : 'text-gray-500'"
@@ -193,4 +211,85 @@
     </div>
 
 </div>
+@if(count($tulises) > 0)
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const canvas = document.getElementById('nilaiTulisChart');
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        
+        // Gradient fill
+        const gradient = ctx.createLinearGradient(0, 0, 0, 140);
+        gradient.addColorStop(0, 'rgba(37, 99, 235, 0.22)'); // blue
+        gradient.addColorStop(1, 'rgba(37, 99, 235, 0.01)');
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: @json($chartLabels),
+                datasets: [{
+                    label: 'Nilai Ujian',
+                    data: @json($chartValues),
+                    borderColor: '#2563eb', // blue-600
+                    borderWidth: 2,
+                    backgroundColor: gradient,
+                    fill: true,
+                    tension: 0.35,
+                    pointBackgroundColor: '#2563eb',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 1.5,
+                    pointRadius: 4.5,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Nilai: ' + context.raw;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        min: 0,
+                        max: 100,
+                        ticks: {
+                            stepSize: 20,
+                            font: {
+                                size: 8,
+                                weight: 'bold'
+                            },
+                            color: '#94a3b8'
+                        },
+                        grid: {
+                            color: '#f1f5f9'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            font: {
+                                size: 8,
+                                weight: 'bold'
+                            },
+                            color: '#94a3b8'
+                        },
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+@endif
 @endsection

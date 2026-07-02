@@ -17,7 +17,13 @@
                 </div>
                 <div>
                     <span class="text-xs text-emerald-200 block font-medium">Assalamu'alaikum,</span>
-                    <h2 class="font-extrabold text-lg text-white leading-none">{{ $student->nama_lengkap }}</h2>
+                    <div class="flex items-center gap-2 mt-0.5">
+                        <h2 class="font-extrabold text-base text-white leading-none">{{ $student->nama_lengkap }}</h2>
+                        <div class="bg-amber-400 text-emerald-950 font-extrabold text-[9px] px-2 py-0.5 rounded-full flex items-center gap-1 shadow-xs shrink-0 select-none">
+                            <i class="fa-solid fa-star text-[8px] animate-pulse"></i>
+                            <span>{{ $student->points }} XP</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -137,6 +143,50 @@
                 @else
                     Belum ada nilai
                 @endif
+            </div>
+        </div>
+    </div>
+
+    <!-- Badges Section -->
+    <div>
+        <h3 class="font-bold text-gray-800 text-sm mb-3">Lencana Penghargaanku</h3>
+        
+        <div class="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
+            @php
+                $allBadges = \App\Models\Badge::orderBy('id')->get();
+                $earnedBadgeIds = $student->badges->pluck('id')->toArray();
+            @endphp
+            <div class="grid grid-cols-5 gap-3">
+                @foreach($allBadges as $bdg)
+                    @php
+                        $isEarned = in_array($bdg->id, $earnedBadgeIds);
+                    @endphp
+                    <div class="flex flex-col items-center text-center space-y-1 relative" x-data="{ open: false }">
+                        <button type="button" @click="open = !open" 
+                                class="w-12 h-12 rounded-full flex items-center justify-center border-2 transition duration-300 relative focus:outline-none {{ $isEarned ? 'bg-gradient-to-br from-amber-50 to-amber-100 border-amber-400 shadow-xs scale-105' : 'bg-gray-50 border-gray-150 grayscale opacity-45' }}">
+                            @if($isEarned)
+                                <i class="{{ $bdg->icon }} text-base"></i>
+                                <!-- Sparkle effect -->
+                                <span class="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-amber-400 animate-ping opacity-75"></span>
+                            @else
+                                <i class="fa-solid fa-lock text-gray-300 text-xs"></i>
+                            @endif
+                        </button>
+                        <span class="text-[8px] font-extrabold {{ $isEarned ? 'text-emerald-800' : 'text-gray-400' }} truncate max-w-full leading-tight select-none">
+                            {{ $bdg->nama }}
+                        </span>
+                        
+                        <!-- Interactive Tooltip (Alpine.js) -->
+                        <div x-show="open" @click.outside="open = false" x-transition.opacity
+                             class="absolute z-20 top-14 w-28 p-2 bg-gray-900 text-white rounded-xl shadow-md text-[9px] leading-normal text-center font-medium">
+                            <strong>{{ $bdg->nama }}</strong>
+                            <p class="text-gray-300 mt-0.5 text-[8px]">{{ $bdg->deskripsi }}</p>
+                            <p class="mt-1 font-bold text-[8px] {{ $isEarned ? 'text-amber-300' : 'text-rose-300' }}">
+                                {{ $isEarned ? 'Sudah Didapat!' : 'Belum Terbuka' }}
+                            </p>
+                        </div>
+                    </div>
+                @endforeach
             </div>
         </div>
     </div>

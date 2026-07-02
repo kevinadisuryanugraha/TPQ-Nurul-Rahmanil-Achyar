@@ -70,11 +70,24 @@ class AbsensiController extends Controller
             'catatan' => 'nullable|string|max:255',
         ]);
 
+        $oldStatus = $record->status;
+
         $record->update([
             'status' => $request->status,
             'catatan' => $request->catatan,
             'admin_id' => auth()->guard('admin')->id(), // Record who updated it
         ]);
+
+        $student = $record->user;
+        if ($student) {
+            // Check & award absensi badges
+            \App\Services\GamificationService::checkAndAwardBadges($student, 'absensi');
+
+            // Send WhatsApp if changed to alpha
+            if ($request->status === 'alpha' && $oldStatus !== 'alpha') {
+                \App\Services\WhatsAppService::sendAbsenceNotification($student, $record->tanggal, $record->sesi);
+            }
+        }
 
         return redirect()->route('admin.absensi.index')->with('success', 'Catatan absensi berhasil dikoreksi.');
     }

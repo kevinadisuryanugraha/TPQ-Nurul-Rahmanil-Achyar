@@ -47,6 +47,13 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+Route::get('/logout', function () {
+    auth()->logout();
+    auth()->guard('admin')->logout();
+    session()->invalidate();
+    session()->regenerateToken();
+    return redirect()->route('login');
+});
 
 // Offline Fallback Route
 Route::view('/offline', 'offline')->name('offline');
@@ -179,4 +186,5 @@ Route::prefix('murid')->middleware(['auth:web', 'murid'])->group(function () {
     Route::get('/pengumuman', [MuridPengumuman::class, 'index'])->name('murid.pengumuman.index');
     Route::get('/flashcard', [\App\Http\Controllers\Murid\FlashcardController::class, 'index'])->name('murid.flashcard.index');
     Route::get('/flashcard/{id}', [\App\Http\Controllers\Murid\FlashcardController::class, 'show'])->name('murid.flashcard.show');
+    Route::post('/flashcard/{id}/finish', [\App\Http\Controllers\Murid\FlashcardController::class, 'finish'])->name('murid.flashcard.finish');
 });

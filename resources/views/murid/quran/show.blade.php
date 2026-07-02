@@ -3,7 +3,45 @@
 @section('title', $surah->nama_latin)
 
 @section('content')
-<div class="px-5 py-6 space-y-6" x-data="{ arabicSize: 'text-2xl' }">
+<div class="px-5 py-6 space-y-6" x-data="{ 
+    arabicSize: 'text-2xl',
+    playingId: null,
+    audioObject: null,
+    
+    toggleAudio(surahId, ayahNo) {
+        const targetId = `${surahId}_${ayahNo}`;
+        
+        if (this.playingId === targetId) {
+            if (this.audioObject) {
+                this.audioObject.pause();
+            }
+            this.playingId = null;
+            return;
+        }
+        
+        if (this.audioObject) {
+            this.audioObject.pause();
+            this.audioObject = null;
+        }
+        
+        const surahStr = String(surahId).padStart(3, '0');
+        const ayahStr = String(ayahNo).padStart(3, '0');
+        const audioUrl = `https://everyayah.com/data/Alafasy_128kbps/${surahStr}${ayahStr}.mp3`;
+        
+        this.playingId = targetId;
+        this.audioObject = new Audio(audioUrl);
+        
+        this.audioObject.play().catch(err => {
+            console.error('Audio playback failed:', err);
+            this.playingId = null;
+        });
+        
+        this.audioObject.addEventListener('ended', () => {
+            this.playingId = null;
+            this.audioObject = null;
+        });
+    }
+}">
     <!-- Navigation Header -->
     <div class="flex items-center justify-between">
         <a href="{{ route('murid.quran.index') }}" class="text-xs font-bold text-emerald-800 flex items-center space-x-1">
@@ -43,11 +81,21 @@
             <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-xs space-y-4">
                 <!-- Verse Top bar -->
                 <div class="flex items-center justify-between border-b border-gray-50 pb-2.5">
-                    <div class="w-6 h-6 rounded-full bg-emerald-50 text-emerald-800 text-[10px] font-bold flex items-center justify-center">
-                        {{ $ayat->nomor_ayat }}
+                    <div class="flex items-center space-x-2.5">
+                        <div class="w-6 h-6 rounded-full bg-emerald-50 text-emerald-800 text-[10px] font-bold flex items-center justify-center shrink-0">
+                            {{ $ayat->nomor_ayat }}
+                        </div>
+                        
+                        <!-- Murottal Audio Player Trigger -->
+                        <button type="button" 
+                                @click="toggleAudio({{ $surah->id }}, {{ $ayat->nomor_ayat }})"
+                                class="w-6 h-6 rounded-full bg-emerald-50 text-emerald-850 flex items-center justify-center hover:bg-emerald-100 transition shrink-0 select-none">
+                            <i class="fa-solid text-[9px] pointer-events-none" 
+                               :class="playingId === '{{ $surah->id }}_{{ $ayat->nomor_ayat }}' ? 'fa-pause text-amber-500' : 'fa-play'"></i>
+                        </button>
                     </div>
+
                     <div class="flex space-x-2">
-                        <!-- Play/Audio placeholder or Copy, let's keep it simple for now -->
                         <span class="text-[9px] text-gray-400 font-semibold uppercase tracking-wider">Surah {{ $surah->id }}:{{ $ayat->nomor_ayat }}</span>
                     </div>
                 </div>

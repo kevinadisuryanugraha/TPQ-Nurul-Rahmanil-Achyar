@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             LandingPageSeeder::class,
             AsmaulHusnaSeeder::class,
             FlashcardDeckSeeder::class,
+            BadgeSeeder::class,
         ]);
     }
 }

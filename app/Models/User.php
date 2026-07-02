@@ -28,6 +28,8 @@ class User extends Authenticatable
         'tanggal_masuk',
         'current_level_id',
         'is_active',
+        'points',
+        'flashcard_completions_count',
     ];
 
     protected $hidden = [
@@ -75,5 +77,11 @@ class User extends Authenticatable
     public function penilaianPraktiks()
     {
         return $this->hasMany(PenilaianPraktik::class);
+    }
+
+    public function badges()
+    {
+        return $this->belongsToMany(Badge::class, 'user_badges', 'user_id', 'badge_id')
+            ->withPivot('created_at');
     }
 }

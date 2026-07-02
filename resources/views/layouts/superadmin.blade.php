@@ -23,9 +23,41 @@
     </style>
     @livewireStyles
 </head>
-<body class="min-h-screen flex flex-col md:flex-row">
+<body class="min-h-screen flex flex-col md:flex-row" x-data="{ sidebarOpen: false }">
+    <!-- Mobile Header/Navbar -->
+    <div class="md:hidden bg-emerald-950 text-white px-4 py-3.5 flex items-center justify-between shadow-md z-30">
+        <div class="flex items-center space-x-3">
+            @if(!empty($appSettings['logo_tpq']) && $appSettings['logo_tpq'] !== '/images/logo-default.png')
+                <img src="{{ $appSettings['logo_tpq'] }}" alt="Logo" class="w-8 h-8 rounded-full object-cover">
+            @else
+                <span class="w-8 h-8 rounded-full bg-amber-400 text-emerald-950 flex items-center justify-center font-bold text-lg"><i class="fa-solid fa-mosque"></i></span>
+            @endif
+            <div>
+                <span class="text-white font-bold text-xs tracking-wide block leading-none">{{ $appSettings['nama_tpq'] }}</span>
+                <span class="text-[9px] text-amber-400 font-semibold uppercase tracking-wider block mt-1">Panel Superadmin</span>
+            </div>
+        </div>
+        <button type="button" @click="sidebarOpen = !sidebarOpen" class="p-2 rounded-lg text-emerald-100 hover:bg-emerald-800 focus:outline-none transition">
+            <i class="fa-solid" :class="sidebarOpen ? 'fa-xmark text-lg' : 'fa-bars text-base'"></i>
+        </button>
+    </div>
+
+    <!-- Mobile Sidebar Backdrop Overlay -->
+    <div x-show="sidebarOpen"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         @click="sidebarOpen = false"
+         class="fixed inset-0 z-30 bg-black/60 md:hidden"
+         style="display: none;">
+    </div>
+
     <!-- Sidebar -->
-    <aside class="w-full md:w-64 bg-emerald-900 text-emerald-100 flex flex-col z-20 shadow-lg">
+    <aside class="fixed inset-y-0 left-0 z-40 w-64 bg-emerald-900 text-emerald-100 flex flex-col shadow-lg transform transition-transform duration-300 ease-in-out md:translate-x-0 md:static md:inset-auto"
+           :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
         <!-- Sidebar Brand -->
         <div class="p-6 bg-emerald-950 flex items-center justify-between border-b border-emerald-800">
             <div class="flex items-center space-x-3">
@@ -39,6 +71,10 @@
                     <span class="text-xs text-amber-400 font-medium">Panel Superadmin</span>
                 </div>
             </div>
+            <!-- Close button for mobile -->
+            <button type="button" @click="sidebarOpen = false" class="md:hidden p-1.5 rounded-lg text-emerald-300 hover:text-white hover:bg-emerald-800 focus:outline-none transition">
+                <i class="fa-solid fa-xmark text-base"></i>
+            </button>
         </div>
 
         <!-- Sidebar Navigation -->
@@ -82,7 +118,6 @@
             </div>
 
             <div class="pt-4 border-t border-emerald-800 mt-4">
-                <!-- Quick link to regular Admin Panel if needed -->
                 <a href="{{ route('admin.dashboard') }}" class="flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-emerald-800 transition duration-200 text-amber-300">
                     <i class="fa-solid fa-toolbox w-5"></i>
                     <span>Masuk Panel Pengurus</span>
@@ -138,6 +173,13 @@
                 <div class="mb-6 p-4 bg-rose-50 border-l-4 border-rose-500 rounded-r-xl shadow-sm text-sm text-rose-800 flex items-center space-x-3">
                     <i class="fa-solid fa-circle-xmark text-rose-500 text-lg"></i>
                     <span>{{ session('error') }}</span>
+                </div>
+            @endif
+
+            @if (session('warning'))
+                <div class="mb-6 p-4 bg-amber-50 border-l-4 border-amber-500 rounded-r-xl shadow-sm text-sm text-amber-800 flex items-center space-x-3">
+                    <i class="fa-solid fa-circle-exclamation text-amber-500 text-lg"></i>
+                    <span>{{ session('warning') }}</span>
                 </div>
             @endif
 

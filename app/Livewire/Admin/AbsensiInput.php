@@ -93,6 +93,11 @@ class AbsensiInput extends Component
         ]);
 
         foreach ($this->attendance as $studentId => $status) {
+            $oldRecord = Absensi::where('user_id', $studentId)
+                ->where('tanggal', $this->tanggal)
+                ->where('sesi', $this->sesi)
+                ->first();
+
             Absensi::updateOrCreate(
                 [
                     'user_id' => $studentId,
@@ -105,6 +110,17 @@ class AbsensiInput extends Component
                     'catatan' => $this->catatan[$studentId] ?? null,
                 ]
             );
+
+            $student = User::find($studentId);
+            if ($student) {
+                // Check & award absensi badges
+                \App\Services\GamificationService::checkAndAwardBadges($student, 'absensi');
+
+                // Send WhatsApp if newly alpha
+                if ($status === 'alpha' && (!$oldRecord || $oldRecord->status !== 'alpha')) {
+                    \App\Services\WhatsAppService::sendAbsenceNotification($student, $this->tanggal, $this->sesi);
+                }
+            }
         }
 
         session()->flash('success', 'Data absensi tanggal ' . Carbon::parse($this->tanggal)->format('d M Y') . ' Sesi ' . $this->sesi . ' berhasil disimpan.');
