@@ -24,6 +24,16 @@
     highlightEnabled: false,
     highlightLoading: false,
 
+    /* offset (detik) untuk kompensasi Ta'awwudz per qari */
+    highlightOffset: parseFloat(localStorage.getItem('tpq_offset') || '0'),
+    qariOffsets: {
+        'ar.alafasy':           0,
+        'ar.abdurrahmaansudais': 4.5,
+        'ar.saoodshuraym':      4.0,
+        'ar.husary':            5.5,
+        'ar.abushuraym':        4.0,
+    },
+
     /* ── Mutex ── */
     globalSource: null,
 
@@ -126,7 +136,8 @@
         if (!this.surahAudio) return;
         this.currentTimeSec = this.surahAudio.currentTime;
         if (!this.highlightEnabled || this.ayahTimestamps.length === 0) return;
-        const t = this.currentTimeSec;
+        /* kurangi offset Ta'awwudz agar highlight sinkron */
+        const t = Math.max(0, this.currentTimeSec - this.highlightOffset);
         const found = this.ayahTimestamps.find(a => t >= a.startSec && t < a.endSec);
         if (found && found.no !== this.activeAyah) {
             this.activeAyah = found.no;
@@ -159,10 +170,18 @@
 
     changeQari(surahId) {
         localStorage.setItem('tpq_qari', this.qari);
+        /* reset offset ke default qari yang dipilih */
+        this.highlightOffset = this.qariOffsets[this.qari] ?? 0;
+        localStorage.setItem('tpq_offset', this.highlightOffset);
         const wasPlaying = this.isPlayingSurah;
         this.destroySurahAudio();
         this.initSurahPlayer(surahId);
         if (wasPlaying) this.$nextTick(() => this.playSurah());
+    },
+
+    adjustOffset(delta) {
+        this.highlightOffset = Math.max(0, Math.min(15, parseFloat((this.highlightOffset + delta).toFixed(1))));
+        localStorage.setItem('tpq_offset', this.highlightOffset);
     },
 
     toggleAudio(surahId, ayahNo) {
@@ -310,7 +329,7 @@
             </button>
         </div>
 
-        <!-- Baris Bawah: Loop + Status Highlight -->
+        <!-- Baris Bawah: Loop + Sinkronisasi Offset -->
         <div class="flex items-center justify-between pt-1 border-t border-gray-50">
             <button
                 type="button"
@@ -322,13 +341,26 @@
                 <span>Ulangi</span>
             </button>
 
-            <span class="text-[9px]">
-                <span x-show="highlightEnabled" class="text-emerald-600 font-medium">
-                    <i class="fa-solid fa-circle-check mr-1"></i>Highlight aktif
-                </span>
-                <span x-show="!highlightEnabled && !highlightLoading" class="text-gray-400">
-                    Highlight tidak tersedia
-                </span>
+            <!-- Kontrol sinkronisasi offset highlight -->
+            <div x-show="highlightEnabled" class="flex items-center space-x-1">
+                <span class="text-[9px] text-gray-400 mr-1">Sinkron:</span>
+                <button
+                    type="button"
+                    @click="adjustOffset(-0.5)"
+                    class="w-5 h-5 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center text-[9px] hover:bg-red-50 hover:text-red-500 transition font-bold"
+                    title="Geser highlight lebih awal"
+                >−</button>
+                <span class="text-[9px] font-mono text-emerald-700 min-w-[28px] text-center" x-text="highlightOffset.toFixed(1) + 's'">0.0s</span>
+                <button
+                    type="button"
+                    @click="adjustOffset(0.5)"
+                    class="w-5 h-5 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center text-[9px] hover:bg-emerald-50 hover:text-emerald-600 transition font-bold"
+                    title="Geser highlight lebih lambat"
+                >+</button>
+            </div>
+
+            <span x-show="!highlightEnabled && !highlightLoading" class="text-[9px] text-gray-400">
+                Highlight tidak tersedia
             </span>
         </div>
     </div>
