@@ -350,7 +350,7 @@
     </div>
 
     <!-- Verses List -->
-    <div class="space-y-4">
+    <div class="space-y-4 transition-all duration-300" :class="playlistIndex >= 0 ? 'pb-24' : ''">
         @foreach($surah->ayats as $ayat)
             <div
                 id="ayah-{{ $ayat->nomor_ayat }}"
@@ -409,6 +409,83 @@
                 </p>
             </div>
         @endforeach
+    </div>
+    <!-- Floating Mini-Player (Spotify-style) -->
+    <div
+        x-show="playlistIndex >= 0"
+        x-transition:enter="transition ease-out duration-300 transform"
+        x-transition:enter-start="opacity-0 translate-y-10"
+        x-transition:enter-end="opacity-100 translate-y-0"
+        x-transition:leave="transition ease-in duration-200 transform"
+        x-transition:leave-start="opacity-100 translate-y-0"
+        x-transition:leave-end="opacity-0 translate-y-10"
+        class="fixed bottom-[74px] left-1/2 -translate-x-1/2 w-full max-w-[440px] px-4 z-40"
+        style="max-width: 440px;"
+    >
+        <div class="bg-white/95 backdrop-blur-md border border-gray-150 rounded-2xl shadow-xl p-3 relative overflow-hidden flex items-center justify-between animate-fade-in">
+            <!-- Progress Bar Tipis di Atas Card -->
+            <div
+                class="absolute top-0 left-0 right-0 h-1 cursor-pointer"
+                style="background-color: #f3f4f6;"
+                @click="playFromIndex(Math.floor($event.offsetX / $el.offsetWidth * playlist.length))"
+            >
+                <div
+                    class="h-full transition-all duration-300"
+                    style="background-color: #059669;"
+                    :style="'width: ' + progressPercent() + '%'"
+                ></div>
+            </div>
+
+            <!-- Detail Lagu / Ayat -->
+            <div class="flex flex-col space-y-0.5 min-w-0 flex-1 pr-3">
+                <span class="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">Sedang Diputar</span>
+                <h4 class="text-xs font-extrabold text-gray-900 truncate">
+                    {{ $surah->nama_latin }}
+                </h4>
+                <p class="text-[9px] text-gray-500 font-medium">
+                    Qari: <span x-text="qariList.find(q => q.value === qari)?.label.split(' ').pop() || ''"></span> &bull; Ayat <span x-text="activeAyah"></span>
+                </p>
+            </div>
+
+            <!-- Kontrol Audio Cepat -->
+            <div class="flex items-center space-x-2 shrink-0">
+                <!-- Prev -->
+                <button
+                    type="button"
+                    @click="prevAyah()"
+                    class="w-7 h-7 rounded-full bg-gray-55 text-gray-650 flex items-center justify-center hover:bg-emerald-50 hover:text-emerald-700 transition text-[10px]"
+                >
+                    <i class="fa-solid fa-backward-step"></i>
+                </button>
+
+                <!-- Play / Pause -->
+                <button
+                    type="button"
+                    @click="isPlayingSurah ? pauseSurah() : playSurah()"
+                    class="w-9 h-9 rounded-full bg-emerald-700 text-white flex items-center justify-center hover:bg-emerald-800 transition shadow-sm text-xs"
+                >
+                    <i class="fa-solid" :class="isPlayingSurah ? 'fa-pause' : 'fa-play'"></i>
+                </button>
+
+                <!-- Next -->
+                <button
+                    type="button"
+                    @click="nextAyah()"
+                    class="w-7 h-7 rounded-full bg-gray-55 text-gray-650 flex items-center justify-center hover:bg-emerald-50 hover:text-emerald-700 transition text-[10px]"
+                >
+                    <i class="fa-solid fa-forward-step"></i>
+                </button>
+
+                <!-- Close / Stop Playlist -->
+                <button
+                    type="button"
+                    @click="playFromIndex(-1)"
+                    class="w-6 h-6 rounded-full text-gray-450 hover:text-gray-650 transition flex items-center justify-center text-[10px] ml-1"
+                >
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 @endsection
