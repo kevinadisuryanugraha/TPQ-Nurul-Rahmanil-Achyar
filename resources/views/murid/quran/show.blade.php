@@ -23,6 +23,7 @@
     playlist: [],           /* [{no, url}] per-ayat audio URLs */
     playlistIndex: -1,      /* index ayat yang sedang diputar */
     playlistAudio: null,    /* Audio object yang aktif */
+    nextAudio: null,        /* Objek audio untuk pre-load ayat berikutnya */
     playlistLoading: false,
     isPlayingSurah: false,
     activeAyah: null,
@@ -74,7 +75,7 @@
     /* ─────────────── Playback Control ─────────────── */
 
     playFromIndex(index) {
-        /* hentikan audio yang sedang main */
+        /* Hentikan audio aktif saat ini */
         if (this.playlistAudio) {
             this.playlistAudio.pause();
             this.playlistAudio.src = '';
@@ -87,6 +88,10 @@
             this.playlistIndex = -1;
             this.currentTimeSec = 0;
             this.currentAyahDur = 0;
+            if (this.nextAudio) {
+                this.nextAudio.pause();
+                this.nextAudio = null;
+            }
             return;
         }
 
@@ -96,12 +101,24 @@
         this.currentTimeSec = 0;
         this.currentAyahDur = 0;
 
-        const audio = new Audio(entry.url);
-        this.playlistAudio = audio;
+        /* Gunakan nextAudio yang sudah di-prebuffer jika ada dan URL-nya cocok */
+        if (this.nextAudio && this.nextAudio.src === entry.url) {
+            this.playlistAudio = this.nextAudio;
+            this.nextAudio = null;
+        } else {
+            this.playlistAudio = new Audio(entry.url);
+        }
 
-        audio.addEventListener('loadedmetadata', () => {
+        const audio = this.playlistAudio;
+
+        /* Ambil durasi */
+        if (audio.duration) {
             this.currentAyahDur = audio.duration;
-        });
+        } else {
+            audio.addEventListener('loadedmetadata', () => {
+                this.currentAyahDur = audio.duration;
+            }, { once: true });
+        }
 
         audio.addEventListener('timeupdate', () => {
             this.currentTimeSec = audio.currentTime;
@@ -120,12 +137,26 @@
                 this.currentTimeSec = 0;
                 this.currentAyahDur = 0;
             }
-        });
+        }, { once: true });
 
+        /* Play audio aktif */
         audio.play().catch(() => {
             this.isPlayingSurah = false;
         });
         this.isPlayingSurah = true;
+
+        /* Lakukan pre-buffering (pre-load) ayat berikutnya di background */
+        const nextIdx = index + 1;
+        if (nextIdx < this.playlist.length) {
+            const nextEntry = this.playlist[nextIdx];
+            this.nextAudio = new Audio(nextEntry.url);
+            this.nextAudio.load(); /* Minta browser mendownload di background */
+        } else if (this.loopSurah && this.playlist.length > 0) {
+            this.nextAudio = new Audio(this.playlist[0].url);
+            this.nextAudio.load();
+        } else {
+            this.nextAudio = null;
+        }
 
         /* scroll ke ayat aktif */
         this.$nextTick(() => {
@@ -177,6 +208,7 @@
         const wasPlaying = this.isPlayingSurah;
         this.pauseSurah();
         if (this.playlistAudio) { this.playlistAudio.src = ''; this.playlistAudio = null; }
+        if (this.nextAudio) { this.nextAudio.pause(); this.nextAudio = null; }
         this.playlistIndex = -1;
         this.activeAyah = null;
         await this.buildPlaylist(surahId);
