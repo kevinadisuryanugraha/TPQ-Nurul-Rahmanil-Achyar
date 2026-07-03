@@ -184,6 +184,19 @@
         localStorage.setItem('tpq_offset', this.highlightOffset);
     },
 
+    syncToAyah(ayahNo) {
+        /* Saat audio main, user tap nomor ayat yang sedang dibaca.
+           Sistem hitung offset = waktu sekarang - waktu mulai ayat tersebut di timestamps.
+           Ini menyelesaikan masalah jeda antar ayat di full surah. */
+        if (!this.isPlayingSurah || !this.highlightEnabled) return;
+        const target = this.ayahTimestamps.find(a => a.no === ayahNo);
+        if (!target) return;
+        const newOffset = Math.max(0, Math.round((this.currentTimeSec - target.startSec) * 10) / 10);
+        this.highlightOffset = newOffset;
+        localStorage.setItem('tpq_offset', newOffset);
+        this.activeAyah = ayahNo;
+    },
+
     toggleAudio(surahId, ayahNo) {
         const targetId = `${surahId}_${ayahNo}`;
 
@@ -378,9 +391,18 @@
                 <!-- Verse Top bar -->
                 <div class="flex items-center justify-between border-b border-gray-50 pb-2.5">
                     <div class="flex items-center space-x-2.5">
-                        <div class="w-6 h-6 rounded-full bg-emerald-50 text-emerald-800 text-[10px] font-bold flex items-center justify-center shrink-0">
+                        <!-- Nomor ayat: tap saat audio main untuk sinkronisasi highlight -->
+                        <button
+                            type="button"
+                            @click="syncToAyah({{ $ayat->nomor_ayat }})"
+                            class="w-6 h-6 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0 transition"
+                            :class="isPlayingSurah && highlightEnabled
+                                ? 'bg-emerald-500 text-white cursor-pointer ring-2 ring-emerald-300 animate-pulse'
+                                : 'bg-emerald-50 text-emerald-800 cursor-default'"
+                            :title="isPlayingSurah && highlightEnabled ? 'Ketuk untuk sinkron highlight ke ayat ini' : ''"
+                        >
                             {{ $ayat->nomor_ayat }}
-                        </div>
+                        </button>
                         
                         <!-- Murottal Audio Player Trigger -->
                         <button type="button" 
