@@ -63,20 +63,22 @@
         }
     },
 
-    adjustTimestampsForBismillah() {
-        if (this.timestamps.length === 0 || !this.durationSec) return;
+    adjustTimestampsForBismillah(surahId) {
+        if (this.timestamps.length === 0) return;
         
-        /* Hitung total durasi seluruh segmen dari API */
-        let totalSegmentDuration = 0;
-        this.timestamps.forEach(t => {
-            totalSegmentDuration += (t.timestamp_to - t.timestamp_from) / 1000;
-        });
+        let offsetMs = 0;
+        if (surahId !== 1 && surahId !== 9) {
+            const qariOffsets = {
+                '7': 6090,  // Mishary Rashid Al-Afasy (6.09s)
+                '3': 3080,  // Abdul Rahman Al-Sudais (3.08s)
+                '4': 6493,  // Abu Bakr Al-Shatri (6.49s)
+                '13': 0,    // Saad Al-Ghamdi (Sudah terintegrasi di API)
+                '6': 0,     // Mahmoud Khalil Al-Husary (Sudah terintegrasi di API)
+            };
+            offsetMs = qariOffsets[this.qari] || 0;
+        }
 
-        const diff = this.durationSec - totalSegmentDuration;
-        
-        /* Jika ada selisih lebih dari 2 detik, geser seluruh segmen karena ada prefiks Bismillah di audio */
-        if (diff > 2.0) {
-            const offsetMs = diff * 1000;
+        if (offsetMs > 0) {
             this.timestamps = this.timestamps.map((t, idx) => {
                 return {
                     verse_key: t.verse_key,
@@ -103,13 +105,15 @@
             this.audioUrl = this.getContinuousAudioUrl(this.qari, surahId) || data.audio_file.audio_url;
             this.timestamps = data.audio_file.timestamps || [];
             
+            /* Terapkan pergeseran Bismillah secara instan jika Qari memerlukan */
+            this.adjustTimestampsForBismillah(surahId);
+            
             /* Inisialisasi Audio Object */
             this.surahAudio = new Audio(this.audioUrl);
             this.surahAudio.loop = this.loopSurah;
             
             this.surahAudio.addEventListener('loadedmetadata', () => {
                 this.durationSec = this.surahAudio.duration;
-                this.adjustTimestampsForBismillah();
             });
             
             this.surahAudio.addEventListener('timeupdate', () => {
