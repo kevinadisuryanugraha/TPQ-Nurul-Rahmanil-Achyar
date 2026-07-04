@@ -10,25 +10,24 @@
     playingId: null,
     audioObject: null,
 
-    /* ── Playlist Sequential Per-Surah ── */
-    qari: localStorage.getItem('tpq_qari') || 'ar.alafasy',
+    /* ── Single Continuous Surah Player ── */
+    qari: localStorage.getItem('tpq_qari_v3') || '7',
     qariList: [
-        { value: 'ar.alafasy',            label: 'Mishary Rashid Al-Afasy' },
-        { value: 'ar.abdurrahmaansudais', label: 'Abdul Rahman Al-Sudais' },
-        { value: 'ar.saoodshuraym',       label: 'Saad Al-Ghamdi' },
-        { value: 'ar.husary',             label: 'Mahmoud Khalil Al-Husary' },
-        { value: 'ar.abushuraym',         label: 'Abu Bakr Al-Shatri' },
+        { value: '7',  label: 'Mishary Rashid Al-Afasy' },
+        { value: '3',  label: 'Abdul Rahman Al-Sudais' },
+        { value: '13', label: 'Saad Al-Ghamdi' },
+        { value: '6',  label: 'Mahmoud Khalil Al-Husary' },
+        { value: '4',  label: 'Abu Bakr Al-Shatri' },
     ],
 
-    playlist: [],           /* [{no, url}] per-ayat audio URLs */
-    playlistIndex: -1,      /* index ayat yang sedang diputar */
-    playlistAudio: null,    /* Audio object yang aktif */
-    nextAudio: null,        /* Objek audio untuk pre-load ayat berikutnya */
+    surahAudio: null,       /* Audio object for the full surah */
+    audioUrl: '',           /* Single MP3 URL */
+    timestamps: [],         /* Timing segments for each verse */
     playlistLoading: false,
     isPlayingSurah: false,
     activeAyah: null,
     currentTimeSec: 0,
-    currentAyahDur: 0,
+    durationSec: 0,
     loopSurah: false,
     globalSource: null,
 
@@ -42,177 +41,141 @@
     },
 
     progressPercent() {
-        if (this.playlist.length === 0) return 0;
-        const base = this.playlistIndex / this.playlist.length * 100;
-        const within = this.currentAyahDur > 0
-            ? (this.currentTimeSec / this.currentAyahDur) * (1 / this.playlist.length) * 100
-            : 0;
-        return Math.min(100, base + within);
+        if (!this.durationSec) return 0;
+        return (this.currentTimeSec / this.durationSec) * 100;
     },
 
-    /* ─────────────── Playlist Setup ─────────────── */
+    /* ─────────────── Setup Player ─────────────── */
 
     async buildPlaylist(surahId) {
         this.playlistLoading = true;
-        this.playlist = [];
+        this.timestamps = [];
+        this.audioUrl = '';
         try {
-            const res = await fetch(`https://api.alquran.cloud/v1/surah/${surahId}/${this.qari}`);
+            const res = await fetch(`https://api.quran.com/api/v4/chapter_recitations/${this.qari}/${surahId}?segments=true`);
             if (!res.ok) throw new Error();
             const data = await res.json();
-            this.playlist = data.data.ayahs.map(a => ({ no: a.numberInSurah, url: a.audio }));
-        } catch {
-            /* fallback ke alafasy jika qari tidak tersedia di API */
-            try {
-                const res = await fetch(`https://api.alquran.cloud/v1/surah/${surahId}/ar.alafasy`);
-                const data = await res.json();
-                this.playlist = data.data.ayahs.map(a => ({ no: a.numberInSurah, url: a.audio }));
-            } catch { /* tetap kosong, tombol play tidak akan berfungsi */ }
+            this.audioUrl = data.audio_file.audio_url;
+            this.timestamps = data.audio_file.timestamps || [];
+            
+            /* Inisialisasi Audio Object */
+            this.surahAudio = new Audio(this.audioUrl);
+            this.surahAudio.loop = this.loopSurah;
+            
+            this.surahAudio.addEventListener('loadedmetadata', () => {
+                this.durationSec = this.surahAudio.duration;
+            });
+            
+            this.surahAudio.addEventListener('timeupdate', () => {
+                this.currentTimeSec = this.surahAudio.currentTime;
+                this.updateHighlight();
+            });
+            
+            this.surahAudio.addEventListener('ended', () => {
+                if (!this.loopSurah) {
+                    this.isPlayingSurah = false;
+                    this.activeAyah = null;
+                    this.currentTimeSec = 0;
+                }
+            });
+        } catch (e) {
+            console.error('Gagal memuat audio surah:', e);
         } finally {
             this.playlistLoading = false;
         }
     },
 
-    /* ─────────────── Playback Control ─────────────── */
-
-    playFromIndex(index) {
-        /* Hentikan audio aktif saat ini */
-        if (this.playlistAudio) {
-            this.playlistAudio.pause();
-            this.playlistAudio.src = '';
-            this.playlistAudio = null;
+    destroySurahAudio() {
+        if (this.surahAudio) {
+            this.surahAudio.pause();
+            this.surahAudio = null;
         }
-
-        if (index < 0 || index >= this.playlist.length) {
-            this.isPlayingSurah = false;
-            this.activeAyah = null;
-            this.playlistIndex = -1;
-            this.currentTimeSec = 0;
-            this.currentAyahDur = 0;
-            if (this.nextAudio) {
-                this.nextAudio.pause();
-                this.nextAudio = null;
-            }
-            return;
-        }
-
-        this.playlistIndex = index;
-        const entry = this.playlist[index];
-        this.activeAyah = entry.no;
+        this.isPlayingSurah = false;
+        this.activeAyah = null;
         this.currentTimeSec = 0;
-        this.currentAyahDur = 0;
-
-        /* Gunakan nextAudio yang sudah di-prebuffer jika ada dan URL-nya cocok */
-        if (this.nextAudio && this.nextAudio.src === entry.url) {
-            this.playlistAudio = this.nextAudio;
-            this.nextAudio = null;
-        } else {
-            this.playlistAudio = new Audio(entry.url);
-        }
-
-        const audio = this.playlistAudio;
-
-        /* Ambil durasi */
-        if (audio.duration) {
-            this.currentAyahDur = audio.duration;
-        } else {
-            audio.addEventListener('loadedmetadata', () => {
-                this.currentAyahDur = audio.duration;
-            }, { once: true });
-        }
-
-        audio.addEventListener('timeupdate', () => {
-            this.currentTimeSec = audio.currentTime;
-        });
-
-        audio.addEventListener('ended', () => {
-            const next = index + 1;
-            if (next < this.playlist.length) {
-                this.playFromIndex(next);
-            } else if (this.loopSurah) {
-                this.playFromIndex(0);
-            } else {
-                this.isPlayingSurah = false;
-                this.activeAyah = null;
-                this.playlistIndex = -1;
-                this.currentTimeSec = 0;
-                this.currentAyahDur = 0;
-            }
-        }, { once: true });
-
-        /* Play audio aktif */
-        audio.play().catch(() => {
-            this.isPlayingSurah = false;
-        });
-        this.isPlayingSurah = true;
-
-        /* Lakukan pre-buffering (pre-load) ayat berikutnya di background */
-        const nextIdx = index + 1;
-        if (nextIdx < this.playlist.length) {
-            const nextEntry = this.playlist[nextIdx];
-            this.nextAudio = new Audio(nextEntry.url);
-            this.nextAudio.load(); /* Minta browser mendownload di background */
-        } else if (this.loopSurah && this.playlist.length > 0) {
-            this.nextAudio = new Audio(this.playlist[0].url);
-            this.nextAudio.load();
-        } else {
-            this.nextAudio = null;
-        }
-
-        /* scroll ke ayat aktif */
-        this.$nextTick(() => {
-            const el = document.getElementById(`ayah-${entry.no}`);
-            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        });
+        this.durationSec = 0;
     },
 
+    /* ─────────────── Playback Control ─────────────── */
+
     playSurah() {
-        /* mutex: hentikan per-ayat kecil */
+        if (!this.surahAudio) return;
         this.globalSource = 'surah';
+        
+        /* Hentikan pemutaran per ayat */
         if (this.audioObject) {
             this.audioObject.pause();
             this.playingId = null;
             this.audioObject = null;
         }
 
-        if (this.playlistAudio && !this.isPlayingSurah) {
-            /* resume dari pause */
-            this.playlistAudio.play().catch(() => {});
-            this.isPlayingSurah = true;
-        } else {
-            /* mulai dari awal atau lanjut dari index terakhir */
-            const startIdx = (this.playlistIndex >= 0 && this.playlistIndex < this.playlist.length)
-                ? this.playlistIndex : 0;
-            this.playFromIndex(startIdx);
-        }
+        this.surahAudio.play().catch(() => {
+            this.isPlayingSurah = false;
+        });
+        this.isPlayingSurah = true;
     },
 
     pauseSurah() {
-        if (this.playlistAudio) this.playlistAudio.pause();
+        if (this.surahAudio) this.surahAudio.pause();
         this.isPlayingSurah = false;
     },
 
+    seekTo(ratio) {
+        if (!this.surahAudio || !this.durationSec) return;
+        this.surahAudio.currentTime = ratio * this.durationSec;
+    },
+
+    seekToAyah(ayahNo) {
+        if (!this.surahAudio || this.timestamps.length === 0) return;
+        const target = this.timestamps.find(t => {
+            const parts = t.verse_key.split(':');
+            return parseInt(parts[1]) === ayahNo;
+        });
+        if (target) {
+            this.surahAudio.currentTime = target.timestamp_from / 1000;
+            this.activeAyah = ayahNo;
+        }
+    },
+
     prevAyah() {
-        if (this.playlist.length === 0) return;
-        const target = Math.max(0, this.playlistIndex <= 0 ? 0 : this.playlistIndex - 1);
-        this.playFromIndex(target);
+        if (!this.surahAudio || this.timestamps.length === 0) return;
+        const curAyah = this.activeAyah || 1;
+        const prev = Math.max(1, curAyah - 1);
+        this.seekToAyah(prev);
     },
 
     nextAyah() {
-        if (this.playlist.length === 0) return;
-        const target = Math.min(this.playlist.length - 1, this.playlistIndex + 1);
-        this.playFromIndex(target);
+        if (!this.surahAudio || this.timestamps.length === 0) return;
+        const curAyah = this.activeAyah || 1;
+        const next = Math.min(this.timestamps.length, curAyah + 1);
+        this.seekToAyah(next);
     },
 
     async changeQari(surahId) {
-        localStorage.setItem('tpq_qari', this.qari);
+        localStorage.setItem('tpq_qari_v3', this.qari);
         const wasPlaying = this.isPlayingSurah;
-        this.pauseSurah();
-        if (this.playlistAudio) { this.playlistAudio.src = ''; this.playlistAudio = null; }
-        if (this.nextAudio) { this.nextAudio.pause(); this.nextAudio = null; }
-        this.playlistIndex = -1;
-        this.activeAyah = null;
+        this.destroySurahAudio();
         await this.buildPlaylist(surahId);
-        if (wasPlaying) this.playFromIndex(0);
+        if (wasPlaying) {
+            this.$nextTick(() => this.playSurah());
+        }
+    },
+
+    updateHighlight() {
+        if (this.timestamps.length === 0) return;
+        const ms = this.currentTimeSec * 1000;
+        const found = this.timestamps.find(t => ms >= t.timestamp_from && ms < t.timestamp_to);
+        if (found) {
+            const parts = found.verse_key.split(':');
+            const ayahNo = parseInt(parts[1]);
+            if (ayahNo !== this.activeAyah) {
+                this.activeAyah = ayahNo;
+                this.$nextTick(() => {
+                    const el = document.getElementById(`ayah-${ayahNo}`);
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                });
+            }
+        }
     },
 
     /* ─────────────── Per-Ayat kecil ─────────────── */
@@ -316,13 +279,13 @@
             </select>
         </div>
 
-        <!-- Progress Bar (ayah-based + waktu ayat aktif) -->
+        <!-- Progress Bar (surah-based) -->
         <div class="space-y-1">
-            <!-- Track klikable: klik loncat ke ayat berdasarkan posisi -->
+            <!-- Track klikable: klik loncat ke posisi audio secara presisi -->
             <div
                 class="w-full h-2.5 rounded-full cursor-pointer relative"
                 style="background-color: #e5e7eb;"
-                @click="playFromIndex(Math.floor($event.offsetX / $el.offsetWidth * playlist.length))"
+                @click="seekTo($event.offsetX / $el.offsetWidth)"
             >
                 <div
                     class="h-full rounded-full transition-all duration-300"
@@ -332,7 +295,7 @@
             </div>
             <div class="flex justify-between text-[9px] text-gray-400 font-mono">
                 <span x-text="fmtTime(currentTimeSec)">0:00</span>
-                <span x-text="fmtTime(currentAyahDur)">0:00</span>
+                <span x-text="fmtTime(durationSec)">0:00</span>
             </div>
         </div>
 
@@ -350,7 +313,7 @@
             <button
                 type="button"
                 @click="isPlayingSurah ? pauseSurah() : playSurah()"
-                :disabled="playlistLoading || playlist.length === 0"
+                :disabled="playlistLoading"
                 class="w-11 h-11 rounded-full bg-emerald-700 text-white flex items-center justify-center hover:bg-emerald-800 transition shadow-md text-sm disabled:opacity-50"
             >
                 <i class="fa-solid" :class="isPlayingSurah ? 'fa-pause' : 'fa-play'"></i>
@@ -370,7 +333,7 @@
         <div class="flex items-center justify-between pt-1 border-t border-gray-50">
             <button
                 type="button"
-                @click="loopSurah = !loopSurah"
+                @click="loopSurah = !loopSurah; if(surahAudio) surahAudio.loop = loopSurah"
                 :class="loopSurah ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'"
                 class="flex items-center space-x-1 px-2.5 py-1 rounded-lg text-[9px] font-semibold transition"
             >
@@ -382,7 +345,7 @@
     </div>
 
     <!-- Verses List -->
-    <div class="space-y-4 transition-all duration-300" :class="playlistIndex >= 0 ? 'pb-24' : ''">
+    <div class="space-y-4 transition-all duration-300" :class="surahAudio !== null ? 'pb-24' : ''">
         @foreach($surah->ayats as $ayat)
             <div
                 id="ayah-{{ $ayat->nomor_ayat }}"
@@ -397,7 +360,7 @@
                         <!-- Nomor ayat: tap untuk loncat ke ayat ini saat surah main -->
                         <button
                             type="button"
-                            @click="isPlayingSurah ? playFromIndex({{ $ayat->nomor_ayat - 1 }}) : null"
+                            @click="isPlayingSurah ? seekToAyah({{ $ayat->nomor_ayat }}) : null"
                             class="w-6 h-6 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0 transition"
                             :class="activeAyah === {{ $ayat->nomor_ayat }}
                                 ? 'bg-emerald-600 text-white ring-2 ring-emerald-300'
@@ -444,7 +407,7 @@
     </div>
     <!-- Floating Mini-Player (Spotify-style) -->
     <div
-        x-show="playlistIndex >= 0"
+        x-show="surahAudio !== null"
         x-transition:enter="transition ease-out duration-300 transform"
         x-transition:enter-start="opacity-0 translate-y-10"
         x-transition:enter-end="opacity-100 translate-y-0"
@@ -459,7 +422,7 @@
             <div
                 class="absolute top-0 left-0 right-0 h-1 cursor-pointer"
                 style="background-color: #f3f4f6;"
-                @click="playFromIndex(Math.floor($event.offsetX / $el.offsetWidth * playlist.length))"
+                @click="seekTo($event.offsetX / $el.offsetWidth)"
             >
                 <div
                     class="h-full transition-all duration-300"
@@ -485,7 +448,7 @@
                 <button
                     type="button"
                     @click="prevAyah()"
-                    class="w-7 h-7 rounded-full bg-gray-55 text-gray-650 flex items-center justify-center hover:bg-emerald-50 hover:text-emerald-700 transition text-[10px]"
+                    class="w-7 h-7 rounded-full bg-gray-55 text-gray-655 flex items-center justify-center hover:bg-emerald-50 hover:text-emerald-700 transition text-[10px]"
                 >
                     <i class="fa-solid fa-backward-step"></i>
                 </button>
@@ -503,7 +466,7 @@
                 <button
                     type="button"
                     @click="nextAyah()"
-                    class="w-7 h-7 rounded-full bg-gray-55 text-gray-650 flex items-center justify-center hover:bg-emerald-50 hover:text-emerald-700 transition text-[10px]"
+                    class="w-7 h-7 rounded-full bg-gray-55 text-gray-655 flex items-center justify-center hover:bg-emerald-50 hover:text-emerald-700 transition text-[10px]"
                 >
                     <i class="fa-solid fa-forward-step"></i>
                 </button>
@@ -511,8 +474,8 @@
                 <!-- Close / Stop Playlist -->
                 <button
                     type="button"
-                    @click="playFromIndex(-1)"
-                    class="w-6 h-6 rounded-full text-gray-450 hover:text-gray-650 transition flex items-center justify-center text-[10px] ml-1"
+                    @click="destroySurahAudio()"
+                    class="w-6 h-6 rounded-full text-gray-455 hover:text-gray-655 transition flex items-center justify-center text-[10px] ml-1"
                 >
                     <i class="fa-solid fa-xmark"></i>
                 </button>
