@@ -73,7 +73,7 @@
                 '3': 3080,  // Abdul Rahman Al-Sudais (3.08s)
                 '4': 6493,  // Abu Bakr Al-Shatri (6.49s)
                 '13': 0,    // Saad Al-Ghamdi (Sudah terintegrasi di API)
-                '6': 5220,  // Mahmoud Khalil Al-Husary (5.22s)
+                '6': 8500,  // Mahmoud Khalil Al-Husary (8.5s)
             };
             offsetMs = qariOffsets[this.qari] || 0;
         }
