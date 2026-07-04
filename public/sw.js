@@ -41,6 +41,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Exclude unsupported schemes (like chrome-extension)
+  if (!event.request.url.startsWith('http://') && !event.request.url.startsWith('https://')) {
+    return;
+  }
+
   const url = new URL(event.request.url);
 
   // 1. NAVIGATION REQUESTS (HTML page loads)
