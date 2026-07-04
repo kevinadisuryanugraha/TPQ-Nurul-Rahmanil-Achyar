@@ -113,15 +113,18 @@
             this.surahAudio.loop = this.loopSurah;
             
             this.surahAudio.addEventListener('loadedmetadata', () => {
+                if (!this.surahAudio) return;
                 this.durationSec = this.surahAudio.duration;
             });
             
             this.surahAudio.addEventListener('timeupdate', () => {
+                if (!this.surahAudio) return;
                 this.currentTimeSec = this.surahAudio.currentTime;
                 this.updateHighlight();
             });
             
             this.surahAudio.addEventListener('ended', () => {
+                if (!this.surahAudio) return;
                 if (!this.loopSurah) {
                     this.isPlayingSurah = false;
                     this.activeAyah = null;
