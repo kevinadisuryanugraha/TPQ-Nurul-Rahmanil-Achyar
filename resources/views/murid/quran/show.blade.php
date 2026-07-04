@@ -63,6 +63,31 @@
         }
     },
 
+    adjustTimestampsForBismillah() {
+        if (this.timestamps.length === 0 || !this.durationSec) return;
+        
+        /* Hitung total durasi seluruh segmen dari API */
+        let totalSegmentDuration = 0;
+        this.timestamps.forEach(t => {
+            totalSegmentDuration += (t.timestamp_to - t.timestamp_from) / 1000;
+        });
+
+        const diff = this.durationSec - totalSegmentDuration;
+        
+        /* Jika ada selisih lebih dari 2 detik, geser seluruh segmen karena ada prefiks Bismillah di audio */
+        if (diff > 2.0) {
+            const offsetMs = diff * 1000;
+            this.timestamps = this.timestamps.map((t, idx) => {
+                return {
+                    verse_key: t.verse_key,
+                    timestamp_from: idx === 0 ? 0 : t.timestamp_from + offsetMs,
+                    timestamp_to: t.timestamp_to + offsetMs,
+                    duration: t.duration
+                };
+            });
+        }
+    },
+
     /* ─────────────── Setup Player ─────────────── */
 
     async buildPlaylist(surahId) {
@@ -84,6 +109,7 @@
             
             this.surahAudio.addEventListener('loadedmetadata', () => {
                 this.durationSec = this.surahAudio.duration;
+                this.adjustTimestampsForBismillah();
             });
             
             this.surahAudio.addEventListener('timeupdate', () => {
