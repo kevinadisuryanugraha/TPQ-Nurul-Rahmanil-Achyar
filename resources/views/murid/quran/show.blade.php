@@ -45,6 +45,24 @@
         return (this.currentTimeSec / this.durationSec) * 100;
     },
 
+    getContinuousAudioUrl(qari, surahId) {
+        const padId = String(surahId).padStart(3, '0');
+        switch (qari) {
+            case '7': // Mishary Rashid Al-Afasy
+                return `https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasee/${padId}.mp3`;
+            case '3': // Abdul Rahman Al-Sudais
+                return `https://download.quranicaudio.com/quran/abdurrahmaan_as-sudays/${padId}.mp3`;
+            case '13': // Saad Al-Ghamdi
+                return `https://download.quranicaudio.com/quran/sa3d_al-ghaamidi/complete//${padId}.mp3`;
+            case '6': // Mahmoud Khalil Al-Husary
+                return `https://download.quranicaudio.com/quran/mahmood_khaleel_al-husaree/${padId}.mp3`;
+            case '4': // Abu Bakr Al-Shatri
+                return `https://download.quranicaudio.com/quran/abu_bakr_ash-shaatree/${padId}.mp3`;
+            default:
+                return '';
+        }
+    },
+
     /* ─────────────── Setup Player ─────────────── */
 
     async buildPlaylist(surahId) {
@@ -55,7 +73,9 @@
             const res = await fetch(`https://api.quran.com/api/v4/chapter_recitations/${this.qari}/${surahId}?segments=true`);
             if (!res.ok) throw new Error();
             const data = await res.json();
-            this.audioUrl = data.audio_file.audio_url;
+            
+            /* Gunakan URL berkas asli continuous jika terdefinisi, jika tidak fallback ke API */
+            this.audioUrl = this.getContinuousAudioUrl(this.qari, surahId) || data.audio_file.audio_url;
             this.timestamps = data.audio_file.timestamps || [];
             
             /* Inisialisasi Audio Object */
