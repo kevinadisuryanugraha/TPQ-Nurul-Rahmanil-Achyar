@@ -39,6 +39,21 @@
         });
     },
 
+    // Getter Penentu Highlight Aktif
+    get activeHighlightId() {
+        if (this.individualPlaying) {
+            return this.playingIndividualId;
+        }
+        if (this.fullPlaying && this.fullDuration > 20) {
+            const intro = 12; // intro Hijjaz (12 detik)
+            if (this.fullCurrentTime < intro) return null;
+            const pct = (this.fullCurrentTime - intro) / (this.fullDuration - intro);
+            const index = Math.floor(pct * 99) + 1;
+            return Math.min(99, Math.max(1, index));
+        }
+        return null;
+    },
+
     // Full Audio Controls
     toggleFull() {
         if (this.fullPlaying) {
@@ -173,52 +188,118 @@
         <span x-text="document.querySelectorAll('[data-asma-item]').length || '99'"></span> dari 99 Nama
     </div>
 
-    <!-- Accordion Cards -->
-    <div class="space-y-2">
+    <!-- Grid Cards Asmaul Husna -->
+    <div class="grid grid-cols-2 gap-4 animate-[fadeIn_0.4s_ease-out]">
         @forelse($names as $name)
             <div data-asma-item x-show="filterName('{{ $name->latin }}', '{{ $name->arti }}', '{{ $name->arab }}')" x-transition
-                class="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-xs">
+                @click="openId = {{ $name->id }}"
+                class="bg-white rounded-2xl border p-3.5 flex flex-col justify-between shadow-xs transition duration-300 relative cursor-pointer select-none hover:shadow-md hover:scale-[1.01] overflow-hidden"
+                :class="activeHighlightId === {{ $name->urutan }} ? 'border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-50/10' : 'border-gray-100'">
                 
-                <!-- Card Header (Toggle) -->
-                <div @click="openId = (openId === {{ $name->id }} ? null : {{ $name->id }})"
-                    class="w-full p-4 flex items-center justify-between text-left cursor-pointer select-none">
-                    <div class="flex items-center space-x-3.5">
-                        <button @click.stop="playIndividual({{ $name->urutan }})" 
-                            class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 border transition duration-300 focus:outline-none"
-                            :class="playingIndividualId === {{ $name->urutan }} && individualPlaying 
-                                ? 'bg-amber-400 border-amber-400 text-emerald-950 animate-pulse font-bold' 
-                                : 'bg-emerald-50 border-emerald-100 text-emerald-700 hover:bg-emerald-100'">
-                            <template x-if="playingIndividualId === {{ $name->urutan }} && individualPlaying">
-                                <i class="fa-solid fa-pause text-[10px]"></i>
-                            </template>
-                            <template x-if="playingIndividualId !== {{ $name->urutan }} || !individualPlaying">
-                                <span class="font-bold text-xs" x-text="'{{ $name->urutan }}'"></span>
-                            </template>
-                        </button>
-                        <div>
-                            <h3 class="arabic-text text-lg font-bold text-emerald-950 leading-none">{{ $name->arab }}</h3>
-                            <span class="text-[12px] font-bold text-gray-800">{{ $name->latin }}</span>
-                            <p class="text-[10px] text-gray-500 mt-0.5">{{ $name->arti }}</p>
-                        </div>
-                    </div>
-                    <i class="fa-solid text-[10px] text-gray-400 transition-transform duration-200"
-                        :class="openId === {{ $name->id }} ? 'fa-chevron-up text-emerald-700' : 'fa-chevron-down'"></i>
+                <!-- Floating Play Button (Top-Left) -->
+                <button @click.stop="playIndividual({{ $name->urutan }})" 
+                    class="absolute top-2.5 left-2.5 w-6.5 h-6.5 rounded-full flex items-center justify-center shrink-0 border transition duration-300 focus:outline-none z-10 shadow-xs"
+                    :class="playingIndividualId === {{ $name->urutan }} && individualPlaying 
+                        ? 'bg-amber-400 border-amber-400 text-emerald-950 animate-pulse font-bold' 
+                        : 'bg-emerald-50 border-emerald-100 text-emerald-700 hover:bg-emerald-100/80'">
+                    <template x-if="playingIndividualId === {{ $name->urutan }} && individualPlaying">
+                        <i class="fa-solid fa-pause text-[8px]"></i>
+                    </template>
+                    <template x-if="playingIndividualId !== {{ $name->urutan }} || !individualPlaying">
+                        <i class="fa-solid fa-play text-[8px] pl-0.5"></i>
+                    </template>
+                </button>
+
+                <!-- Sequence Badge (Top-Right) -->
+                <span class="absolute top-2.5 right-2.5 px-1.5 py-0.5 rounded-md bg-gray-50 border border-gray-100 text-gray-400 font-bold text-[8px]">
+                    {{ $name->urutan }}
+                </span>
+
+                <!-- Dome Arch containing Arabic Calligraphy -->
+                <div class="border-t border-x border-amber-250/50 rounded-t-full mt-6 p-3 pt-6 pb-4 flex flex-col items-center justify-center bg-gray-50/40 relative">
+                    <h3 class="arabic-text text-2xl font-bold text-emerald-950 leading-none select-none">{{ $name->arab }}</h3>
                 </div>
 
-                <!-- Card Body (Description) -->
-                <div x-show="openId === {{ $name->id }}" x-collapse
-                    class="border-t border-gray-50 bg-emerald-50/20 p-4">
-                    <p class="text-[11px] text-gray-700 leading-relaxed">
-                        <strong class="text-emerald-800">{{ $name->latin }}</strong> ({{ $name->arti }}): {{ $name->deskripsi }}
-                    </p>
+                <!-- Divider -->
+                <div class="border-b border-gray-100 my-2"></div>
+
+                <!-- Text Info -->
+                <div class="text-center space-y-0.5">
+                    <span class="text-xs font-black text-gray-900 block">{{ $name->latin }}</span>
+                    <p class="text-[9px] text-gray-500 font-semibold leading-tight line-clamp-1" title="{{ $name->arti }}">{{ $name->arti }}</p>
                 </div>
             </div>
         @empty
-            <div class="bg-white rounded-2xl border border-gray-100 p-8 text-center text-gray-400">
+            <div class="col-span-2 bg-white rounded-2xl border border-gray-100 p-8 text-center text-gray-400">
                 <i class="fa-solid fa-kaaba text-3xl text-gray-300 mb-2"></i>
                 <p class="text-xs">Data Asmaul Husna tidak tersedia.</p>
             </div>
         @endforelse
+    </div>
+
+    <!-- Bottom Sheet Drawer Modal -->
+    <div x-show="openId !== null" 
+        class="fixed inset-0 z-50 flex items-end justify-center bg-gray-900/60 backdrop-blur-xs" 
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        x-cloak>
+        
+        <div @click.outside="openId = null" 
+            class="bg-white rounded-t-3xl max-w-sm w-full p-6 space-y-5 shadow-2xl border-t border-gray-150 relative transform transition-transform duration-300"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="translate-y-full"
+            x-transition:enter-end="translate-y-0"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="translate-y-0"
+            x-transition:leave-end="translate-y-full">
+            
+            <!-- Close Indicator Bar -->
+            <div class="w-12 h-1 bg-gray-200 rounded-full mx-auto -mt-2 mb-3 cursor-pointer" @click="openId = null"></div>
+
+            <!-- Drawer Content -->
+            @foreach($names as $name)
+                <div x-show="openId === {{ $name->id }}" class="space-y-4 text-center">
+                    <!-- Header Calligraphy -->
+                    <div class="py-4 bg-emerald-50/20 border border-emerald-100/50 rounded-2xl relative overflow-hidden">
+                        <h4 class="arabic-text text-5xl font-black text-emerald-950">{{ $name->arab }}</h4>
+                    </div>
+                    
+                    <!-- Latin & Arti -->
+                    <div>
+                        <h3 class="text-xl font-black text-gray-900">{{ $name->latin }}</h3>
+                        <span class="text-xs font-bold text-amber-600">Nama Ke-{{ $name->urutan }} • {{ $name->arti }}</span>
+                    </div>
+
+                    <!-- Divider -->
+                    <div class="border-b border-gray-100"></div>
+
+                    <!-- Deskripsi -->
+                    <div class="text-left bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                        <span class="text-[9px] font-black text-gray-400 block uppercase tracking-wider mb-1">Khasiat & Penjelasan</span>
+                        <p class="text-xs text-gray-700 leading-relaxed">{{ $name->deskripsi }}</p>
+                    </div>
+
+                    <!-- Action Play Button inside Modal -->
+                    <div class="pt-2 flex items-center justify-center space-x-3">
+                        <button @click="playIndividual({{ $name->urutan }})" 
+                            class="w-full py-3.5 rounded-2xl font-extrabold text-xs flex items-center justify-center space-x-2 transition"
+                            :class="playingIndividualId === {{ $name->urutan }} && individualPlaying 
+                                ? 'bg-rose-600 hover:bg-rose-700 text-white' 
+                                : 'bg-emerald-700 hover:bg-emerald-800 text-white'">
+                            <i class="fa-solid" :class="playingIndividualId === {{ $name->urutan }} && individualPlaying ? 'fa-pause' : 'fa-play'"></i>
+                            <span x-text="playingIndividualId === {{ $name->urutan }} && individualPlaying ? 'Jeda Suara' : 'Putar Pelafalan'"></span>
+                        </button>
+                        <button @click="openId = null" class="bg-gray-100 hover:bg-gray-200 text-gray-800 font-extrabold text-xs px-5 py-3.5 rounded-2xl transition">
+                            Tutup
+                        </button>
+                    </div>
+                </div>
+            @endforeach
+        </div>
     </div>
 </div>
 @endsection
