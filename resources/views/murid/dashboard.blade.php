@@ -37,6 +37,7 @@
                     <span class="text-xs font-semibold text-white">{{ $appSettings['tahun_ajaran'] ?? '-' }}</span>
                 </div>
             </div>
+        </div>
     </div>
 
     <!-- Prayer Times Widget -->
@@ -92,19 +93,19 @@
 
             <!-- Browser Blocked Autoplay Alert -->
             <div x-show="browserBlockedAdzan" class="bg-amber-50 border border-amber-200 rounded-2xl p-3 text-center space-y-2 cursor-pointer transition hover:bg-amber-100" @click="playAdzanBypassed()">
-                <span class="text-[9px] font-bold text-amber-900 block">
-                    <i class="fa-solid fa-circle-exclamation mr-1 text-amber-600 animate-bounce"></i> 
-                    Waktunya Shalat! Ketuk di sini untuk mengumandangkan Adzan.
+                <span class="text-[9px] font-bold text-amber-900 block flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-circle-exclamation text-amber-600 animate-bounce"></i> 
+                    <span x-text="adzanName === 'Pengujian Suara' ? 'Tes Adzan terblokir oleh browser. Ketuk di sini untuk memutar.' : 'Waktunya Shalat! Ketuk di sini untuk mengumandangkan Adzan.'"></span>
                 </span>
             </div>
 
             <!-- Grid Shalat -->
-            <div class="grid grid-cols-5 gap-1.5 text-center">
+            <div class="grid grid-cols-3 gap-2.5 text-center">
                 <template x-for="(time, name) in prayerTimes" :key="name">
-                    <div class="p-2 rounded-xl border transition"
-                         :class="nextPrayer.name === name ? 'bg-emerald-800 text-white border-emerald-800 scale-105 shadow-sm font-bold' : 'bg-gray-50 text-gray-900 border-gray-100'">
-                        <span class="text-[8px] uppercase tracking-wider block opacity-75" x-text="translatePrayerName(name)"></span>
-                        <span class="text-[10px] font-black block mt-1" x-text="time"></span>
+                    <div class="p-2.5 rounded-2xl border transition duration-300"
+                         :class="nextPrayer.name === translatePrayerName(name) ? 'bg-gradient-to-br from-emerald-800 to-emerald-950 text-white border-emerald-850 scale-[1.03] shadow-md font-bold' : 'bg-gray-50/70 text-gray-900 border-gray-100/80 hover:bg-gray-100/50'">
+                        <span class="text-[9px] uppercase tracking-wider block opacity-75" x-text="translatePrayerName(name)"></span>
+                        <span class="text-xs font-black block mt-1.5" x-text="time"></span>
                     </div>
                 </template>
             </div>
@@ -495,10 +496,11 @@
 
                 this.adzanAudio = new Audio(adzanUrl);
                 this.adzanPlaying = true;
+                this.browserBlockedAdzan = false;
 
                 this.adzanAudio.play().catch(err => {
-                    console.error('Gagal memutar suara tes:', err.message);
-                    alert('Autoplay terblokir. Silakan ketuk area mana saja pada halaman terlebih dahulu baru klik Tes Adzan lagi.');
+                    console.warn('Gagal memutar suara tes:', err.message);
+                    this.browserBlockedAdzan = true;
                     this.adzanPlaying = false;
                 });
 
