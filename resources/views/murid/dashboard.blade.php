@@ -202,10 +202,10 @@
             timerInterval: null,
             
             muadzinUrls: {
-                makkah: 'https://archive.org/download/AdhanMakkah/Adhan%20Makkah.mp3',
-                madinah: 'https://archive.org/download/adhan-madinah/adhan-madinah.mp3',
-                aqsa: 'https://archive.org/download/adhan-al-aqsa/adhan-al-aqsa.mp3',
-                turki: 'https://archive.org/download/adhan-turkey/adhan-turkey.mp3'
+                makkah: 'https://www.islamcan.com/audio/adhan/azan1.mp3',
+                madinah: 'https://www.islamcan.com/audio/adhan/azan2.mp3',
+                aqsa: 'https://www.islamcan.com/audio/adhan/azan6.mp3',
+                turki: 'https://www.islamcan.com/audio/adhan/azan16.mp3'
             },
 
             cities: {
