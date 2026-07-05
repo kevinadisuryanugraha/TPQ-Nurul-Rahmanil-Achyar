@@ -1,35 +1,35 @@
-# Asmaul Husna Audio Implementation Plan
+# Asmaul Husna Grid Card & Audio Integration Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Menambahkan fitur audio interaktif (pemutar murottal penuh nasyid Hijjaz dan pemutar suara pelafalan per nama Allah) pada halaman Asmaul Husna murid.
+**Goal:** Mengubah tampilan Asmaul Husna menjadi kartu grid 2-kolom bermotif kubah masjid, menyisipkan laci detail (bottom drawer modal), serta menambahkan logika highlight dinamis linear ketika memutar murottal penuh.
 
-**Architecture:** Modifikasi dilakukan sepenuhnya di sisi client (Frontend) pada file Blade [index.blade.php](file:///c:/laragon/www/porto-apps/lms-tpq/resources/views/murid/asmaul-husna/index.blade.php) menggunakan state reactive Alpine.js dan HTML5 Audio API. Tidak membutuhkan perubahan database atau route backend.
+**Architecture:** Modifikasi dilakukan sepenuhnya di sisi client (Frontend) pada file Blade [index.blade.php](file:///c:/laragon/www/porto-apps/lms-tpq/resources/views/murid/asmaul-husna/index.blade.php) menggunakan Alpine.js dan Tailwind CSS.
 
 **Tech Stack:** Laravel Blade, Alpine.js, Tailwind CSS, FontAwesome 6.4.0.
 
 ## Global Constraints
 - Bahasa antarmuka: 100% Bahasa Indonesia untuk salinan teks dan label.
 - Menggunakan FontAwesome via CDN untuk ikon.
-- Desain responsif ramah seluler (mobile-first).
+- Desain responsif ramah seluler (mobile-first, max-width 480px).
 
 ---
 
-### Task 1: Terapkan Audio Player di Asmaul Husna View
+### Task 1: Terapkan Grid Card, Laci Detail, & Highlight Dinamis
 
 **Files:**
 - Modify: `resources/views/murid/asmaul-husna/index.blade.php`
 
 **Interfaces:**
-- Consumes: `AsmaulHusna` data from controller (variable `$names`).
-- Produces: Web-based HTML5 Audio components managed by Alpine.js.
+- Consumes: `$names` collection from controller.
+- Produces: Grid cards, bottom sheet drawer, and linear highlight state.
 
-- [ ] **Step 1: Modifikasi `index.blade.php` bagian `x-data`**
-  Tambahkan variabel state audio pada baris 6-14 untuk pemutar murottal Hijjaz dan audio individu:
+- [ ] **Step 1: Modifikasi Alpine.js State & Logika Highlight**
+  Perbarui `x-data` di [index.blade.php](file:///c:/laragon/www/porto-apps/lms-tpq/resources/views/murid/asmaul-husna/index.blade.php) untuk melacak `activeDetailId` (untuk laci bawah bawah) dan menghitung `activeHighlightId`:
   ```javascript
   {
       search: '',
-      openId: null,
+      openId: null, // Digunakan sebagai activeDetailId (laci laci bawah)
       filterName(latin, arti, arab) {
           if (this.search === '') return true;
           const q = this.search.toLowerCase();
@@ -61,6 +61,21 @@
               this.fullPlaying = false;
               this.fullCurrentTime = 0;
           });
+      },
+
+      // Getter Penentu Highlight Aktif
+      get activeHighlightId() {
+          if (this.individualPlaying) {
+              return this.playingIndividualId;
+          }
+          if (this.fullPlaying && this.fullDuration > 20) {
+              const intro = 12; // intro Hijjaz (12 detik)
+              if (this.fullCurrentTime < intro) return null;
+              const pct = (this.fullCurrentTime - intro) / (this.fullDuration - intro);
+              const index = Math.floor(pct * 99) + 1;
+              return Math.min(99, Math.max(1, index));
+          }
+          return null;
       },
 
       // Full Audio Controls
@@ -95,13 +110,11 @@
 
       // Individual Audio Controls
       playIndividual(urutan) {
-          // Stop full audio if playing
           if (this.fullPlaying) {
               this.fullAudio.pause();
               this.fullPlaying = false;
           }
 
-          // If clicking the same already playing individual audio, pause it
           if (this.playingIndividualId === urutan && this.individualPlaying) {
               this.stopIndividual();
               return;
@@ -136,65 +149,126 @@
   }
   ```
 
-- [ ] **Step 2: Sisipkan UI Pemutar Utama (Top Audio Player Card)**
-  Di bawah header dan di atas input pencarian, sisipkan elemen HTML berikut:
+- [ ] **Step 2: Update Markup Grid Card List**
+  Ganti bagian `<!-- Accordion Cards -->` menjadi grid card dengan ornamen kubah masjid (dome arch) dan highlight dinamis:
   ```html
-  <!-- Top Audio Player Card -->
-  <div class="bg-gradient-to-br from-emerald-800 to-emerald-950 text-white rounded-3xl p-5 shadow-md flex flex-col space-y-3 relative overflow-hidden">
-      <!-- Islamic Spinning star decoration -->
-      <div class="absolute -right-6 -bottom-6 w-24 h-24 border border-white/5 rounded-full flex items-center justify-center pointer-events-none">
-          <i class="fa-solid fa-star-and-crescent text-4xl text-white/5 animate-[spin_20s_linear_infinite]" :class="fullPlaying ? 'opacity-100' : 'opacity-20'"></i>
-      </div>
+  <!-- Grid Cards Asmaul Husna -->
+  <div class="grid grid-cols-2 gap-4">
+      @forelse($names as $name)
+          <div data-asma-item x-show="filterName('{{ $name->latin }}', '{{ $name->arti }}', '{{ $name->arab }}')" x-transition
+              @click="openId = {{ $name->id }}"
+              class="bg-white rounded-2xl border p-3.5 flex flex-col justify-between shadow-xs transition duration-300 relative cursor-pointer select-none hover:shadow-md hover:scale-[1.01] overflow-hidden"
+              :class="activeHighlightId === {{ $name->urutan }} ? 'border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-50/10' : 'border-gray-100'">
+              
+              <!-- Floating Play Button (Top-Left) -->
+              <button @click.stop="playIndividual({{ $name->urutan }})" 
+                  class="absolute top-2.5 left-2.5 w-6.5 h-6.5 rounded-full flex items-center justify-center shrink-0 border transition duration-300 focus:outline-none z-10 shadow-xs"
+                  :class="playingIndividualId === {{ $name->urutan }} && individualPlaying 
+                      ? 'bg-amber-400 border-amber-400 text-emerald-950 animate-pulse font-bold' 
+                      : 'bg-emerald-50 border-emerald-100 text-emerald-700 hover:bg-emerald-100/80'">
+                  <template x-if="playingIndividualId === {{ $name->urutan }} && individualPlaying">
+                      <i class="fa-solid fa-pause text-[8px]"></i>
+                  </template>
+                  <template x-if="playingIndividualId !== {{ $name->urutan }} || !individualPlaying">
+                      <i class="fa-solid fa-play text-[8px] pl-0.5"></i>
+                  </template>
+              </button>
 
-      <div class="flex items-center justify-between">
-          <div>
-              <h3 class="font-extrabold text-xs text-amber-300 uppercase tracking-wider">Murottal Asmaul Husna</h3>
-              <p class="text-[10px] text-emerald-200 mt-0.5">Lantunan Indah 99 Nama Allah (Hijjaz)</p>
-          </div>
-          <!-- Speed Controller -->
-          <div class="flex items-center space-x-1 bg-white/10 rounded-xl p-0.5 text-[9px] font-bold">
-              <button @click="setSpeed(1.0)" :class="fullPlaybackRate === 1.0 ? 'bg-amber-400 text-emerald-950' : 'text-white'" class="px-2 py-0.5 rounded-lg transition">1.0x</button>
-              <button @click="setSpeed(1.25)" :class="fullPlaybackRate === 1.25 ? 'bg-amber-400 text-emerald-950' : 'text-white'" class="px-2 py-0.5 rounded-lg transition">1.25x</button>
-              <button @click="setSpeed(1.5)" :class="fullPlaybackRate === 1.5 ? 'bg-amber-400 text-emerald-950' : 'text-white'" class="px-2 py-0.5 rounded-lg transition">1.5x</button>
-          </div>
-      </div>
+              <!-- Sequence Badge (Top-Right) -->
+              <span class="absolute top-2.5 right-2.5 px-1.5 py-0.5 rounded-md bg-gray-50 border border-gray-100 text-gray-400 font-bold text-[8px]">
+                  {{ $name->urutan }}
+              </span>
 
-      <!-- Controls and Progress -->
-      <div class="flex items-center space-x-3.5">
-          <button @click="toggleFull()" class="w-10 h-10 rounded-full bg-amber-400 text-emerald-950 flex items-center justify-center text-sm shadow-md transition hover:scale-105 active:scale-95 shrink-0">
-              <i class="fa-solid" :class="fullPlaying ? 'fa-pause' : 'fa-play pl-0.5'"></i>
-          </button>
+              <!-- Dome Arch containing Arabic Calligraphy -->
+              <div class="border-t border-x border-amber-200/50 rounded-t-full mt-6 p-3 pt-6 pb-4 flex flex-col items-center justify-center bg-gray-50/40 relative">
+                  <h3 class="arabic-text text-2xl font-bold text-emerald-950 leading-none select-none">{{ $name->arab }}</h3>
+              </div>
 
-          <!-- Timeline -->
-          <div class="flex-1 space-y-1">
-              <input type="range" min="0" :max="fullDuration || 100" :value="fullCurrentTime" @input="seekFull($event.target.value)"
-                  class="w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-amber-400 focus:outline-none">
-              <div class="flex justify-between text-[8px] text-emerald-200/80 font-mono">
-                  <span x-text="formatTime(fullCurrentTime)">00:00</span>
-                  <span x-text="formatTime(fullDuration)">00:00</span>
+              <!-- Divider -->
+              <div class="border-b border-gray-100 my-2"></div>
+
+              <!-- Text Info -->
+              <div class="text-center space-y-0.5">
+                  <span class="text-xs font-black text-gray-900 block">{{ $name->latin }}</span>
+                  <p class="text-[9px] text-gray-500 font-semibold leading-tight line-clamp-1" title="{{ $name->arti }}">{{ $name->arti }}</p>
               </div>
           </div>
-      </div>
+      @empty
+          <div class="col-span-2 bg-white rounded-2xl border border-gray-100 p-8 text-center text-gray-400">
+              <i class="fa-solid fa-kaaba text-3xl text-gray-300 mb-2"></i>
+              <p class="text-xs">Data Asmaul Husna tidak tersedia.</p>
+          </div>
+      @endforelse
   </div>
   ```
 
-- [ ] **Step 3: Ganti Nomor Urutan dengan Tombol Audio Per Nama**
-  Modifikasi elemen tombol pemutar per nama di sebelah kiri data nama Allah:
+- [ ] **Step 3: Tambahkan Markup Bottom Sheet Detail Modal**
+  Sisipkan modal laci bawah (Bottom Sheet Drawer) di bagian paling bawah halaman untuk menampilkan penjelasan detail nama saat kartu diklik:
   ```html
-  <!-- Replace lines 49-52 in index.blade.php -->
-  <div class="flex items-center space-x-3.5">
-      <button @click.stop="playIndividual({{ $name->urutan }})" 
-          class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 border transition duration-300"
-          :class="playingIndividualId === {{ $name->urutan }} && individualPlaying 
-              ? 'bg-amber-400 border-amber-400 text-emerald-950 animate-pulse' 
-              : 'bg-emerald-50 border-emerald-100 text-emerald-700 hover:bg-emerald-100'">
-          <template x-if="playingIndividualId === {{ $name->urutan }} && individualPlaying">
-              <i class="fa-solid fa-pause text-[10px]"></i>
-          </template>
-          <template x-if="playingIndividualId !== {{ $name->urutan }} || !individualPlaying">
-              <span class="font-bold text-xs" x-text="'{{ $name->urutan }}'"></span>
-          </template>
-      </button>
+  <!-- Bottom Sheet Drawer Modal -->
+  <div x-show="openId !== null" 
+      class="fixed inset-0 z-50 flex items-end justify-center bg-gray-900/60 backdrop-blur-xs" 
+      x-transition:enter="transition ease-out duration-300"
+      x-transition:enter-start="opacity-0"
+      x-transition:enter-end="opacity-100"
+      x-transition:leave="transition ease-in duration-200"
+      x-transition:leave-start="opacity-100"
+      x-transition:leave-end="opacity-0"
+      x-cloak>
+      
+      <div @click.outside="openId = null" 
+          class="bg-white rounded-t-3xl max-w-sm w-full p-6 space-y-5 shadow-2xl border-t border-gray-150 relative transform transition-transform duration-300"
+          x-transition:enter="transition ease-out duration-300"
+          x-transition:enter-start="translate-y-full"
+          x-transition:enter-end="translate-y-0"
+          x-transition:leave="transition ease-in duration-200"
+          x-transition:leave-start="translate-y-0"
+          x-transition:leave-end="translate-y-full">
+          
+          <!-- Close Indicator Bar -->
+          <div class="w-12 h-1 bg-gray-200 rounded-full mx-auto -mt-2 mb-3 cursor-pointer" @click="openId = null"></div>
+
+          <!-- Drawer Content -->
+          @foreach($names as $name)
+              <div x-show="openId === {{ $name->id }}" class="space-y-4 text-center">
+                  <!-- Header Calligraphy -->
+                  <div class="py-4 bg-emerald-50/20 border border-emerald-100/50 rounded-2xl relative overflow-hidden">
+                      <h4 class="arabic-text text-5xl font-black text-emerald-950">{{ $name->arab }}</h4>
+                  </div>
+                  
+                  <!-- Latin & Arti -->
+                  <div>
+                      <h3 class="text-xl font-black text-gray-900">{{ $name->latin }}</h3>
+                      <span class="text-xs font-bold text-amber-600">Nama Ke-{{ $name->urutan }} • {{ $name->arti }}</span>
+                  </div>
+
+                  <!-- Divider -->
+                  <div class="border-b border-gray-100"></div>
+
+                  <!-- Deskripsi -->
+                  <div class="text-left bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                      <span class="text-[9px] font-black text-gray-400 block uppercase tracking-wider mb-1">Khasiat & Penjelasan</span>
+                      <p class="text-xs text-gray-700 leading-relaxed">{{ $name->deskripsi }}</p>
+                  </div>
+
+                  <!-- Action Play Button inside Modal -->
+                  <div class="pt-2 flex items-center justify-center space-x-3">
+                      <button @click="playIndividual({{ $name->urutan }})" 
+                          class="w-full py-3.5 rounded-2xl font-extrabold text-xs flex items-center justify-center space-x-2 transition"
+                          :class="playingIndividualId === {{ $name->urutan }} && individualPlaying 
+                              ? 'bg-rose-600 hover:bg-rose-700 text-white' 
+                              : 'bg-emerald-700 hover:bg-emerald-800 text-white'">
+                          <i class="fa-solid" :class="playingIndividualId === {{ $name->urutan }} && individualPlaying ? 'fa-pause' : 'fa-play'"></i>
+                          <span x-text="playingIndividualId === {{ $name->urutan }} && individualPlaying ? 'Jeda Suara' : 'Putar Pelafalan'"></span>
+                      </button>
+                      <button @click="openId = null" class="bg-gray-100 hover:bg-gray-200 text-gray-800 font-extrabold text-xs px-5 py-3.5 rounded-2xl transition">
+                          Tutup
+                      </button>
+                  </div>
+              </div>
+          @endforeach
+      </div>
+  </div>
   ```
 
 - [ ] **Step 4: Jalankan build asset**
@@ -207,5 +281,5 @@
 - [ ] **Step 1: Jalankan unit tests**
   Run: `composer run test`
 
-- [ ] **Step 2: Uji fungsionalitas audio**
-  Buka halaman Asmaul Husna santri, uji tombol pemutar murottal penuh di atas dan tombol putar individu per nomor kartu. Pastikan pemutaran audio berjalan lancar tanpa bertabrakan suara.
+- [ ] **Step 2: Uji fungsionalitas audio & grid highlight**
+  Buka halaman Asmaul Husna santri, uji pemutar murottal penuh dan klik beberapa nama untuk membuka laci bawah detail modal. Uji highlight dinamis yang berpindah dan penanganan jeda audio.
