@@ -1,53 +1,69 @@
-# Spesifikasi Desain: Fitur Audio Asmaul Husna
+# Spesifikasi Desain: Fitur Audio & Grid Card Asmaul Husna
 
 ## 1. Latar Belakang & Tujuan
-Fitur Asmaul Husna saat ini di Portal Murid hanya menampilkan teks nama-nama Allah dalam format Arab, transliterasi Latin, arti, dan deskripsi singkat. Untuk mempermudah santri dalam menghafal dan mempelajari pelafalan yang benar (makhorijul huruf), fitur ini akan ditingkatkan dengan penambahan audio interaktif:
-1.  **Pemutar Audio Murottal Asmaul Husna Utuh**: Memutar keseluruhan 99 nama secara berurutan menggunakan lantunan nasyid Hijjaz.
-2.  **Pemutar Audio Per Nama**: Memutar pelafalan spesifik dari satu nama yang dipilih oleh murid secara cepat dan mandiri.
+Fitur Asmaul Husna di Portal Murid dirancang ulang dengan visual berbasis kartu grid (Grid Card) yang elegan menyerupai kubah masjid/kaligrafi klasik. Fitur ini juga menyertakan penanda visual (highlight) aktif saat pemutaran murottal penuh (Hijjaz) maupun pemutaran audio pelafalan nama per nama secara mandiri.
 
 ---
 
 ## 2. Rancangan Tampilan UI/UX
-Tampilan halaman [index.blade.php](file:///c:/laragon/www/porto-apps/lms-tpq/resources/views/murid/asmaul-husna/index.blade.php) akan diperbarui dengan menyematkan elemen-elemen berikut:
+Tampilan halaman [index.blade.php](file:///c:/laragon/www/porto-apps/lms-tpq/resources/views/murid/asmaul-husna/index.blade.php) dirombak dari format daftar vertikal accordion menjadi grid:
 
-### A. Kartu Pemutar Utama (Top Audio Player Card)
-*   Diletakkan di bagian atas daftar Asmaul Husna, tepat di bawah informasi pencarian.
-*   **Visual**: Menggunakan kontainer bergradien hijau zamrud gelap (`bg-gradient-to-br from-emerald-800 to-emerald-950 text-white rounded-3xl p-5 shadow-md flex flex-col space-y-3 relative overflow-hidden`).
-*   **Elemen Kendali**:
-    *   *Play/Pause Button*: Tombol bulat besar dengan ikon play/pause dinamis.
-    *   *Timeline Progress Bar*: Input range HTML5 yang disinkronkan dengan pemutaran audio, menampilkan waktu berjalan (`MM:SS`) dan total waktu.
-    *   *Playback Speed Button*: Tombol kelipatan kecepatan putar (`1.0x`, `1.25x`, `1.5x`) untuk mempermudah menyimak pelan.
-    *   *Pulsing/Spinning Icon*: Ornamen bintang/kubah islami yang berputar lembut saat audio dimainkan.
+### A. Kisi Kartu (Grid Layout)
+*   Menggunakan tata letak grid responsif 2-kolom (`grid grid-cols-2 gap-4`).
+*   Setiap kartu memiliki pembungkus dengan transisi bayangan lembut dan respons terhadap hover (`hover:shadow-md hover:scale-[1.01] transition duration-300`).
 
-### B. Tombol Putar Per Nama (Individual Card Audio Button)
-*   Setiap baris kartu nama Allah akan memiliki tombol putar di bagian kiri (menggantikan atau mendampingi nomor urutan).
-*   Nomor urutan akan diubah menjadi tombol interaktif bulat (`w-8 h-8 rounded-full bg-emerald-50 text-emerald-700 hover:bg-emerald-100 flex items-center justify-center font-bold text-xs shrink-0`).
-*   Saat ditekan, nomor urutan berubah menjadi ikon putar (`fa-play`), ikon jeda (`fa-pause`), atau ikon spinner berputar (`fa-spinner fa-spin`) ketika audio sedang memuat/diputar.
+### B. Anatomi Kartu Nama Allah
+1.  **Dinding Kubah (Dome Arch)**:
+    *   Wadah bagian atas yang melengkung sempurna di atas dan lurus di bawah (`border-t border-x border-amber-200/50 rounded-t-full pt-6 pb-4 bg-gray-50/50 relative`).
+    *   Berisi teks Arab besar (`arabic-text text-2xl font-bold text-emerald-950`).
+2.  **Badge Urutan & Tombol Putar Terapung**:
+    *   Badge Nomor (`urutan`): Melayang di pojok kanan atas kartu.
+    *   Tombol Putar Individu (`playIndividual(urutan)`): Melayang di pojok kiri atas kartu. Menggunakan warna emerald lembut yang berubah menjadi amber cerah berdenyut (pulse) jika aktif memutar audio nama tersebut.
+3.  **Detail Nama & Arti (Bawah Kartu)**:
+    *   Dibatasi oleh garis pembatas horizontal tipis.
+    *   Menampilkan nama Latin transliterasi tebal (`text-xs font-black text-gray-900`) dan terjemahan (`text-[9px] text-gray-500 line-clamp-1`).
+
+### C. Modal Laci Bawah (Bottom Sheet Detail Modal)
+*   Mengklik kartu di area mana saja (selain tombol play) akan meluncurkan Bottom Sheet Drawer dari bawah layar.
+*   **Isi Drawer**:
+    *   Teks Arab besar (`text-4xl`).
+    *   Transliterasi Latin (`text-lg font-bold`).
+    *   Arti dan penjelasan/deskripsi mendalam (`text-xs text-gray-600 leading-relaxed`).
+    *   Tombol putar suara langsung di dalam drawer.
 
 ---
 
 ## 3. Logika State & Perilaku Audio (Alpine.js)
-Semua fungsi audio dikelola langsung di sisi client menggunakan state reactive Alpine.js:
 
-### A. Detail Sumber Audio (CDN)
-1.  **Murottal Lengkap (Hijjaz)**:
-    *   URL: `https://archive.org/download/KoleksiNasyidPilihanBacaquran.tk/Hijjaz-asmaulHusna.mp3`
-2.  **Audio Per Nama**:
-    *   URL: `https://www.islamicity.org/mediaassets/MP3/other/covers/99-names-of-Allah/${padId}.mp3?v06092021`
-    *   `padId` merupakan angka urutan yang dikonversi ke format 3-digit berawalan nol (contoh: 1 -> `001`, 99 -> `099`).
+### A. Highlight Dinamis Linear Murottal Penuh
+Kemajuan pemutaran audio murottal penuh disinkronkan ke index 99 Nama Allah menggunakan estimasi waktu berjalan:
+*   `introDuration = 12` detik (intro nasyid Hijjaz).
+*   Jika `currentTime >= 12`:
+    *   `pct = (currentTime - 12) / (duration - 12)`
+    *   `activeIndex = Math.floor(pct * 99) + 1`
+    *   `activeIndex` dikunci di antara `1` dan `99`.
+*   Kartu dengan urutan sama dengan `activeIndex` akan otomatis menyala dengan border hijau emerald tebal (`border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-50/10`).
 
-### B. Aturan Interaksi Audio
-1.  **Pencegahan Overlapping**:
-    *   Saat pemutar utama dinyalakan (`toggleFull()`), jika ada audio individu yang sedang berputar, sistem akan secara otomatis menjeda audio individu tersebut (`stopIndividual()`).
-    *   Saat tombol audio per nama diklik (`playIndividual(urutan)`), jika pemutar utama sedang berputar, pemutar utama akan dijeda (`pauseFull()`).
-2.  **Penyelamatan Memori**:
-    *   Semua instance Audio baru akan dibersihkan atau diganti dengan benar saat berpindah atau menghentikan audio untuk menghindari penumpukan memori di peramban.
+### B. Getter Penentu Highlight Aktif
+```javascript
+get activeHighlightId() {
+    if (this.individualPlaying) {
+        return this.playingIndividualId;
+    }
+    if (this.fullPlaying && this.fullDuration > 20) {
+        const intro = 12; // intro Hijjaz
+        if (this.fullCurrentTime < intro) return null;
+        const pct = (this.fullCurrentTime - intro) / (this.fullDuration - intro);
+        const index = Math.floor(pct * 99) + 1;
+        return Math.min(99, Math.max(1, index));
+    }
+    return null;
+}
+```
 
 ---
 
 ## 4. Rencana Pengujian
-*   **Uji Fungsionalitas**:
-    *   Memastikan audio murottal penuh dapat diputar, dijeda, dan dipindah posisinya (*seekable timeline*).
-    *   Memastikan tombol per nama memutar berkas MP3 yang tepat sesuai dengan urutan nama Allah yang diklik.
-    *   Memastikan kecepatan putar (speed rate) benar-benar memperlambat atau mempercepat pemutaran.
-    *   Memastikan tidak ada dua audio yang berbunyi secara bersamaan (saling mematikan jika yang lain dinyalakan).
+*   Verifikasi visual bahwa 99 nama tampil rapi dalam format grid 2-kolom.
+*   Verifikasi highlight berpindah secara merata saat murottal penuh diputar.
+*   Verifikasi detail drawer meluncur naik dengan benar saat kartu diklik, dan tombol di dalam drawer berfungsi memutar audio dengan benar.
