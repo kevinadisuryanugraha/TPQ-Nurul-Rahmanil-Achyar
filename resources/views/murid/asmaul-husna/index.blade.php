@@ -10,6 +10,104 @@
         if (this.search === '') return true;
         const q = this.search.toLowerCase();
         return latin.toLowerCase().includes(q) || arti.toLowerCase().includes(q) || arab.includes(q);
+    },
+    
+    // Audio State
+    fullAudio: null,
+    fullPlaying: false,
+    fullDuration: 0,
+    fullCurrentTime: 0,
+    fullPlaybackRate: 1.0,
+    
+    individualAudio: null,
+    playingIndividualId: null,
+    individualPlaying: false,
+
+    // Initializer
+    init() {
+        this.fullAudio = new Audio('https://archive.org/download/KoleksiNasyidPilihanBacaquran.tk/Hijjaz-asmaulHusna.mp3');
+        
+        this.fullAudio.addEventListener('durationchange', () => {
+            this.fullDuration = this.fullAudio.duration;
+        });
+        this.fullAudio.addEventListener('timeupdate', () => {
+            this.fullCurrentTime = this.fullAudio.currentTime;
+        });
+        this.fullAudio.addEventListener('ended', () => {
+            this.fullPlaying = false;
+            this.fullCurrentTime = 0;
+        });
+    },
+
+    // Full Audio Controls
+    toggleFull() {
+        if (this.fullPlaying) {
+            this.fullAudio.pause();
+            this.fullPlaying = false;
+        } else {
+            this.stopIndividual();
+            this.fullAudio.playbackRate = this.fullPlaybackRate;
+            this.fullAudio.play().catch(e => console.error('Gagal memutar audio penuh:', e));
+            this.fullPlaying = true;
+        }
+    },
+    
+    setSpeed(rate) {
+        this.fullPlaybackRate = rate;
+        this.fullAudio.playbackRate = rate;
+    },
+    
+    seekFull(value) {
+        this.fullAudio.currentTime = value;
+        this.fullCurrentTime = value;
+    },
+    
+    formatTime(seconds) {
+        if (isNaN(seconds)) return '00:00';
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    },
+
+    // Individual Audio Controls
+    playIndividual(urutan) {
+        // Stop full audio if playing
+        if (this.fullPlaying) {
+            this.fullAudio.pause();
+            this.fullPlaying = false;
+        }
+
+        // If clicking the same already playing individual audio, pause it
+        if (this.playingIndividualId === urutan && this.individualPlaying) {
+            this.stopIndividual();
+            return;
+          }
+
+        this.stopIndividual();
+
+        this.playingIndividualId = urutan;
+        this.individualPlaying = true;
+        const padId = String(urutan).padStart(3, '0');
+        const url = `https://www.islamicity.org/mediaassets/MP3/other/covers/99-names-of-Allah/${padId}.mp3?v06092021`;
+
+        this.individualAudio = new Audio(url);
+        this.individualAudio.play().catch(err => {
+            console.warn('Gagal memutar audio individu:', err.message);
+            this.stopIndividual();
+        });
+
+        this.individualAudio.addEventListener('ended', () => {
+            this.stopIndividual();
+        });
+    },
+
+    stopIndividual() {
+        if (this.individualAudio) {
+            this.individualAudio.pause();
+            this.individualAudio = null;
+        }
+        this.playingIndividualId = null;
+        this.individualPlaying = false;
     }
 }">
     <!-- Header -->
@@ -20,6 +118,44 @@
         <div>
             <h2 class="font-extrabold text-gray-900 text-base">Asmaul Husna</h2>
             <p class="text-[10px] text-gray-500">99 Nama Allah Yang Maha Indah</p>
+        </div>
+    </div>
+
+    <!-- Top Audio Player Card -->
+    <div class="bg-gradient-to-br from-emerald-800 to-emerald-950 text-white rounded-3xl p-5 shadow-md flex flex-col space-y-3 relative overflow-hidden">
+        <!-- Islamic Spinning star decoration -->
+        <div class="absolute -right-6 -bottom-6 w-24 h-24 border border-white/5 rounded-full flex items-center justify-center pointer-events-none">
+            <i class="fa-solid fa-star-and-crescent text-4xl text-white/5 animate-[spin_20s_linear_infinite]" :class="fullPlaying ? 'opacity-100' : 'opacity-20'"></i>
+        </div>
+
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="font-extrabold text-xs text-amber-300 uppercase tracking-wider">Murottal Asmaul Husna</h3>
+                <p class="text-[10px] text-emerald-200 mt-0.5">Lantunan Indah 99 Nama Allah (Hijjaz)</p>
+            </div>
+            <!-- Speed Controller -->
+            <div class="flex items-center space-x-1 bg-white/10 rounded-xl p-0.5 text-[9px] font-bold">
+                <button @click="setSpeed(1.0)" :class="fullPlaybackRate === 1.0 ? 'bg-amber-400 text-emerald-950' : 'text-white'" class="px-2 py-0.5 rounded-lg transition">1.0x</button>
+                <button @click="setSpeed(1.25)" :class="fullPlaybackRate === 1.25 ? 'bg-amber-400 text-emerald-950' : 'text-white'" class="px-2 py-0.5 rounded-lg transition">1.25x</button>
+                <button @click="setSpeed(1.5)" :class="fullPlaybackRate === 1.5 ? 'bg-amber-400 text-emerald-950' : 'text-white'" class="px-2 py-0.5 rounded-lg transition">1.5x</button>
+            </div>
+        </div>
+
+        <!-- Controls and Progress -->
+        <div class="flex items-center space-x-3.5">
+            <button @click="toggleFull()" class="w-10 h-10 rounded-full bg-amber-400 text-emerald-950 flex items-center justify-center text-sm shadow-md transition hover:scale-105 active:scale-95 shrink-0">
+                <i class="fa-solid" :class="fullPlaying ? 'fa-pause' : 'fa-play pl-0.5'"></i>
+            </button>
+
+            <!-- Timeline -->
+            <div class="flex-1 space-y-1">
+                <input type="range" min="0" :max="fullDuration || 100" :value="fullCurrentTime" @input="seekFull($event.target.value)"
+                    class="w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-amber-400 focus:outline-none">
+                <div class="flex justify-between text-[8px] text-emerald-200/80 font-mono">
+                    <span x-text="formatTime(fullCurrentTime)">00:00</span>
+                    <span x-text="formatTime(fullDuration)">00:00</span>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -44,12 +180,21 @@
                 class="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-xs">
                 
                 <!-- Card Header (Toggle) -->
-                <button @click="openId = (openId === {{ $name->id }} ? null : {{ $name->id }})"
-                    class="w-full p-4 flex items-center justify-between text-left focus:outline-none">
+                <div @click="openId = (openId === {{ $name->id }} ? null : {{ $name->id }})"
+                    class="w-full p-4 flex items-center justify-between text-left cursor-pointer select-none">
                     <div class="flex items-center space-x-3.5">
-                        <span class="w-7 h-7 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold text-[10px] flex items-center justify-center shrink-0">
-                            {{ $name->urutan }}
-                        </span>
+                        <button @click.stop="playIndividual({{ $name->urutan }})" 
+                            class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 border transition duration-300 focus:outline-none"
+                            :class="playingIndividualId === {{ $name->urutan }} && individualPlaying 
+                                ? 'bg-amber-400 border-amber-400 text-emerald-950 animate-pulse font-bold' 
+                                : 'bg-emerald-50 border-emerald-100 text-emerald-700 hover:bg-emerald-100'">
+                            <template x-if="playingIndividualId === {{ $name->urutan }} && individualPlaying">
+                                <i class="fa-solid fa-pause text-[10px]"></i>
+                            </template>
+                            <template x-if="playingIndividualId !== {{ $name->urutan }} || !individualPlaying">
+                                <span class="font-bold text-xs" x-text="'{{ $name->urutan }}'"></span>
+                            </template>
+                        </button>
                         <div>
                             <h3 class="arabic-text text-lg font-bold text-emerald-950 leading-none">{{ $name->arab }}</h3>
                             <span class="text-[12px] font-bold text-gray-800">{{ $name->latin }}</span>
@@ -58,7 +203,7 @@
                     </div>
                     <i class="fa-solid text-[10px] text-gray-400 transition-transform duration-200"
                         :class="openId === {{ $name->id }} ? 'fa-chevron-up text-emerald-700' : 'fa-chevron-down'"></i>
-                </button>
+                </div>
 
                 <!-- Card Body (Description) -->
                 <div x-show="openId === {{ $name->id }}" x-collapse
