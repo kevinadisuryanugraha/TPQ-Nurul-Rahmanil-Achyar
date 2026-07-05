@@ -191,9 +191,9 @@
     <!-- Grid Cards Asmaul Husna -->
     <div class="grid grid-cols-2 gap-4 animate-[fadeIn_0.4s_ease-out]">
         @forelse($names as $name)
-            <div data-asma-item x-show="filterName('{{ $name->latin }}', '{{ $name->arti }}', '{{ $name->arab }}')" x-transition
+            <div data-asma-item x-show="filterName('{{ addslashes($name->latin) }}', '{{ addslashes($name->arti) }}', '{{ addslashes($name->arab) }}')" x-transition
                 @click="openId = {{ $name->id }}"
-                class="bg-white rounded-2xl border p-3.5 flex flex-col justify-between shadow-xs transition duration-300 relative cursor-pointer select-none hover:shadow-md hover:scale-[1.01] overflow-hidden"
+                class="bg-white rounded-2xl border p-3 flex flex-col justify-between shadow-xs transition duration-300 relative cursor-pointer select-none hover:shadow-md hover:scale-[1.01] overflow-hidden"
                 :class="activeHighlightId === {{ $name->urutan }} ? 'border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-50/10' : 'border-gray-100'">
                 
                 <!-- Floating Play Button (Top-Left) -->
@@ -216,8 +216,8 @@
                 </span>
 
                 <!-- Dome Arch containing Arabic Calligraphy -->
-                <div class="border-t border-x border-amber-250/50 rounded-t-full mt-6 p-3 pt-6 pb-4 flex flex-col items-center justify-center bg-gray-50/40 relative">
-                    <h3 class="arabic-text text-2xl font-bold text-emerald-950 leading-none select-none">{{ $name->arab }}</h3>
+                <div class="border border-amber-200/50 rounded-t-full mt-6 p-4 flex flex-col items-center justify-center bg-gray-50/40 relative aspect-[4/5] w-full">
+                    <h3 class="arabic-text text-3xl font-bold text-emerald-950 leading-none select-none">{{ $name->arab }}</h3>
                 </div>
 
                 <!-- Divider -->
@@ -225,7 +225,7 @@
 
                 <!-- Text Info -->
                 <div class="text-center space-y-0.5">
-                    <span class="text-xs font-black text-gray-900 block">{{ $name->latin }}</span>
+                    <span class="text-xs font-black text-gray-900 block leading-tight">{{ $name->latin }}</span>
                     <p class="text-[9px] text-gray-500 font-semibold leading-tight line-clamp-1" title="{{ $name->arti }}">{{ $name->arti }}</p>
                 </div>
             </div>
@@ -239,7 +239,7 @@
 
     <!-- Bottom Sheet Drawer Modal -->
     <div x-show="openId !== null" 
-        class="fixed inset-0 z-50 flex items-end justify-center bg-gray-900/60 backdrop-blur-xs" 
+        class="fixed inset-y-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-50 flex items-end justify-center bg-gray-900/60 backdrop-blur-xs" 
         x-transition:enter="transition ease-out duration-300"
         x-transition:enter-start="opacity-0"
         x-transition:enter-end="opacity-100"
