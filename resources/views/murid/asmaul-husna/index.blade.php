@@ -239,7 +239,7 @@
 
     <!-- Bottom Sheet Drawer Modal -->
     <div x-show="openId !== null" 
-        class="fixed inset-y-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-50 flex items-end justify-center bg-gray-900/60 backdrop-blur-xs" 
+        class="absolute top-0 left-0 right-0 bottom-[-80px] z-50 flex items-end justify-center bg-gray-900/60 backdrop-blur-xs" 
         x-transition:enter="transition ease-out duration-300"
         x-transition:enter-start="opacity-0"
         x-transition:enter-end="opacity-100"
@@ -249,7 +249,7 @@
         x-cloak>
         
         <div @click.outside="openId = null" 
-            class="bg-white rounded-t-3xl max-w-sm w-full p-6 space-y-5 shadow-2xl border-t border-gray-150 relative transform transition-transform duration-300"
+            class="bg-white rounded-t-3xl w-full p-6 space-y-5 shadow-2xl border-t border-gray-150 relative transform transition-transform duration-300"
             x-transition:enter="transition ease-out duration-300"
             x-transition:enter-start="translate-y-full"
             x-transition:enter-end="translate-y-0"
