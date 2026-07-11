@@ -45,9 +45,10 @@
             return this.playingIndividualId;
         }
         if (this.fullPlaying && this.fullDuration > 20) {
-            const intro = 12; // intro Hijjaz (12 detik)
+            const intro = 26; // Intro & Preamble Hijjaz (26 detik sebelum nama pertama 'Ar-Rahman')
+            const activeDuration = 154; // Nama 1-99 dinyanyikan selama 154 detik (hingga detik 180 / 3:00)
             if (this.fullCurrentTime < intro) return null;
-            const pct = (this.fullCurrentTime - intro) / (this.fullDuration - intro);
+            const pct = (this.fullCurrentTime - intro) / activeDuration;
             const index = Math.floor(pct * 99) + 1;
             return Math.min(99, Math.max(1, index));
         }
