@@ -242,6 +242,44 @@
 
     <!-- Bottom Sheet Drawer Modal -->
     <div x-show="openId !== null" 
+        x-data="{
+            startY: 0,
+            diffY: 0,
+            isDragging: false,
+            initDrag(e) {
+                this.isDragging = true;
+                const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+                this.startY = clientY;
+                this.diffY = 0;
+                $refs.drawerCard.style.transition = 'none';
+            },
+            drag(e) {
+                if (!this.isDragging) return;
+                const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+                if (clientY === undefined) return;
+                this.diffY = clientY - this.startY;
+                if (this.diffY > 0) {
+                    $refs.drawerCard.style.transform = `translateY(${this.diffY}px)`;
+                }
+            },
+            endDrag() {
+                if (!this.isDragging) return;
+                this.isDragging = false;
+                $refs.drawerCard.style.transition = '';
+                if (this.diffY > 100) {
+                    openId = null;
+                    setTimeout(() => {
+                        $refs.drawerCard.style.transform = '';
+                    }, 300);
+                } else {
+                    $refs.drawerCard.style.transform = '';
+                }
+            }
+        }"
+        @mousemove.window="drag($event)"
+        @touchmove.window="drag($event)"
+        @mouseup.window="endDrag()"
+        @touchend.window="endDrag()"
         class="absolute inset-0 z-50 flex items-end justify-center bg-gray-900/60 backdrop-blur-xs" 
         x-transition:enter="transition ease-out duration-300"
         x-transition:enter-start="opacity-0"
@@ -251,17 +289,23 @@
         x-transition:leave-end="opacity-0"
         x-cloak>
         
-        <div @click.outside="openId = null" 
-            class="bg-white rounded-t-3xl w-full p-6 space-y-4 shadow-2xl border-t border-gray-150 relative transform transition-transform duration-300 flex flex-col max-h-[85vh]"
-            x-transition:enter="transition ease-out duration-300"
+        <div x-show="openId !== null"
+            x-ref="drawerCard"
+            @click.outside="openId = null" 
+            class="bg-white rounded-t-3xl w-full p-6 pt-2 space-y-4 shadow-2xl border-t border-gray-150 relative transform transition-transform duration-300 flex flex-col max-h-[85vh]"
+            x-transition:enter="transition ease-out duration-300 transform"
             x-transition:enter-start="translate-y-full"
             x-transition:enter-end="translate-y-0"
-            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave="transition ease-in duration-200 transform"
             x-transition:leave-start="translate-y-0"
             x-transition:leave-end="translate-y-full">
             
-            <!-- Close Indicator Bar -->
-            <div class="w-12 h-1 bg-gray-200 rounded-full mx-auto -mt-2 mb-2 cursor-pointer" @click="openId = null"></div>
+            <!-- Close Indicator Bar (Draggable) -->
+            <div class="py-2.5 w-full flex justify-center cursor-row-resize select-none active:cursor-grabbing"
+                @mousedown="initDrag($event)"
+                @touchstart.prevent="initDrag($event)">
+                <div class="w-12 h-1.5 bg-gray-200 rounded-full hover:bg-gray-300 transition"></div>
+            </div>
 
             <!-- Scrollable Drawer Content -->
             <div class="flex-1 overflow-y-auto space-y-4 pr-1 scrollbar-thin">
