@@ -23,10 +23,26 @@
     playingIndividualId: null,
     individualPlaying: false,
 
+    // Calibration state
+    showSyncPanel: false,
+    checkpoints: [],
+    
     // Initializer
     init() {
         this.fullAudio = new Audio('https://archive.org/download/KoleksiNasyidPilihanBacaquran.tk/Hijjaz-asmaulHusna.mp3');
         
+        // Load custom checkpoints if available
+        const saved = localStorage.getItem('tpq_asmaul_husna_checkpoints');
+        if (saved) {
+            try {
+                this.checkpoints = JSON.parse(saved);
+            } catch(e) {
+                this.loadDefaultCheckpoints();
+            }
+        } else {
+            this.loadDefaultCheckpoints();
+        }
+
         this.fullAudio.addEventListener('durationchange', () => {
             this.fullDuration = this.fullAudio.duration;
         });
@@ -39,36 +55,61 @@
         });
     },
 
+    loadDefaultCheckpoints() {
+        this.checkpoints = [
+            { id: 1, name: 'Ar-Rahman', time: 12.0 },
+            { id: 10, name: 'Al-Mutakabbir', time: 27.0 },
+            { id: 20, name: 'Al-Qabidh', time: 43.0 },
+            { id: 30, name: 'Al-Latif', time: 58.0 },
+            { id: 40, name: 'Al-Hasib', time: 73.0 },
+            { id: 50, name: 'Al-Ba\'ith', time: 88.0 },
+            { id: 60, name: 'Al-Mu\'id', time: 104.0 },
+            { id: 70, name: 'Al-Muqtadir', time: 121.0 },
+            { id: 80, name: 'Al-Tawwab', time: 139.0 },
+            { id: 90, name: 'Al-Mani\'', time: 158.0 },
+            { id: 99, name: 'As-Sabur', time: 182.0 }
+        ];
+    },
+
+    adjustCheckpoint(index, amount) {
+        const newVal = Math.round((this.checkpoints[index].time + amount) * 10) / 10;
+        if (newVal >= 0) {
+            this.checkpoints[index].time = newVal;
+            localStorage.setItem('tpq_asmaul_husna_checkpoints', JSON.stringify(this.checkpoints));
+        }
+    },
+
+    resetCheckpoints() {
+        if (confirm('Reset semua kalibrasi waktu ke setelan bawaan?')) {
+            this.loadDefaultCheckpoints();
+            localStorage.removeItem('tpq_asmaul_husna_checkpoints');
+        }
+    },
+
+    copyCheckpoints() {
+        const text = JSON.stringify(this.checkpoints, null, 4);
+        navigator.clipboard.writeText(text).then(() => {
+            alert('Konfigurasi berhasil disalin ke clipboard! Silakan kirimkan ke chat.');
+        }).catch(err => {
+            alert('Gagal menyalin konfigurasi: ' + err);
+        });
+    },
+
     // Getter Penentu Highlight Aktif (Piecewise Linear Interpolation)
     get activeHighlightId() {
         if (this.individualPlaying) {
             return this.playingIndividualId;
         }
-        if (this.fullPlaying && this.fullDuration > 20) {
+        if (this.fullPlaying && this.fullDuration > 20 && this.checkpoints.length > 0) {
             const time = this.fullCurrentTime;
             
-            // Hand-timed checkpoints for Hijjaz Asmaul Husna vocal segments
-            const checkpoints = [
-                { id: 1, time: 12.0 },
-                { id: 10, time: 27.0 },
-                { id: 20, time: 43.0 },
-                { id: 30, time: 58.0 },
-                { id: 40, time: 73.0 },
-                { id: 50, time: 88.0 },
-                { id: 60, time: 104.0 },
-                { id: 70, time: 121.0 },
-                { id: 80, time: 139.0 },
-                { id: 90, time: 158.0 },
-                { id: 99, time: 182.0 }
-            ];
-
-            if (time < checkpoints[0].time) return null;
-            if (time >= checkpoints[checkpoints.length - 1].time) return null; // Outro / Doa
+            if (time < this.checkpoints[0].time) return null;
+            if (time >= this.checkpoints[this.checkpoints.length - 1].time) return null; // Outro / Doa
 
             // Find matching segment
-            for (let i = 0; i < checkpoints.length - 1; i++) {
-                const start = checkpoints[i];
-                const end = checkpoints[i + 1];
+            for (let i = 0; i < this.checkpoints.length - 1; i++) {
+                const start = this.checkpoints[i];
+                const end = this.checkpoints[i + 1];
                 if (time >= start.time && time < end.time) {
                     const pct = (time - start.time) / (end.time - start.time);
                     const index = Math.floor(start.id + pct * (end.id - start.id));
@@ -173,11 +214,21 @@
                 <h3 class="font-extrabold text-xs text-amber-300 uppercase tracking-wider">Murottal Asmaul Husna</h3>
                 <p class="text-[10px] text-emerald-200 mt-0.5">Lantunan Indah 99 Nama Allah (Hijjaz)</p>
             </div>
-            <!-- Speed Controller -->
-            <div class="flex items-center space-x-1 bg-white/10 rounded-xl p-0.5 text-[9px] font-bold">
-                <button @click="setSpeed(1.0)" :class="fullPlaybackRate === 1.0 ? 'bg-amber-400 text-emerald-950' : 'text-white'" class="px-2 py-0.5 rounded-lg transition">1.0x</button>
-                <button @click="setSpeed(1.25)" :class="fullPlaybackRate === 1.25 ? 'bg-amber-400 text-emerald-950' : 'text-white'" class="px-2 py-0.5 rounded-lg transition">1.25x</button>
-                <button @click="setSpeed(1.5)" :class="fullPlaybackRate === 1.5 ? 'bg-amber-400 text-emerald-950' : 'text-white'" class="px-2 py-0.5 rounded-lg transition">1.5x</button>
+            <div class="flex items-center space-x-1.5 shrink-0">
+                <!-- Sync Adjuster Button -->
+                <button @click="showSyncPanel = !showSyncPanel" 
+                    class="text-[9px] font-bold px-2.5 py-1.5 rounded-xl transition flex items-center space-x-1.5"
+                    :class="showSyncPanel ? 'bg-amber-400 text-emerald-950 shadow-xs' : 'bg-white/10 text-white hover:bg-white/20'">
+                    <i class="fa-solid fa-sliders text-[8px]"></i>
+                    <span>Kalibrasi</span>
+                </button>
+
+                <!-- Speed Controller -->
+                <div class="flex items-center space-x-0.5 bg-white/10 rounded-xl p-0.5 text-[9px] font-bold">
+                    <button @click="setSpeed(1.0)" :class="fullPlaybackRate === 1.0 ? 'bg-amber-400 text-emerald-950 shadow-xs' : 'text-white'" class="px-2 py-0.5 rounded-lg transition">1.0x</button>
+                    <button @click="setSpeed(1.25)" :class="fullPlaybackRate === 1.25 ? 'bg-amber-400 text-emerald-950 shadow-xs' : 'text-white'" class="px-2 py-0.5 rounded-lg transition">1.25x</button>
+                    <button @click="setSpeed(1.5)" :class="fullPlaybackRate === 1.5 ? 'bg-amber-400 text-emerald-950 shadow-xs' : 'text-white'" class="px-2 py-0.5 rounded-lg transition">1.5x</button>
+                </div>
             </div>
         </div>
 
@@ -194,6 +245,44 @@
                 <div class="flex justify-between text-[8px] text-emerald-200/80 font-mono">
                     <span x-text="formatTime(fullCurrentTime)">00:00</span>
                     <span x-text="formatTime(fullDuration)">00:00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calibration Setup Panel -->
+        <div x-show="showSyncPanel" 
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 -translate-y-2"
+            x-transition:enter-end="opacity-100 translate-y-0"
+            class="pt-3 border-t border-white/10 space-y-3 text-emerald-100">
+            
+            <div class="bg-emerald-950/40 rounded-2xl p-3 border border-white/5 space-y-2.5">
+                <div class="flex items-center justify-between">
+                    <span class="text-[9px] font-black text-amber-300 uppercase tracking-wider block">Sesuaikan Detik Highlight</span>
+                    <span class="text-[8px] text-emerald-300 font-semibold">(Disimpan di HP Anda)</span>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-2 text-[10px]">
+                    <template x-for="(cp, idx) in checkpoints" :key="idx">
+                        <div class="flex items-center justify-between bg-white/5 px-2 py-1.5 rounded-xl border border-white/5">
+                            <span class="font-bold truncate max-w-[65px]" x-text="cp.name"></span>
+                            <div class="flex items-center space-x-1.5 shrink-0">
+                                <button @click="adjustCheckpoint(idx, -0.5)" class="w-5.5 h-5.5 rounded-md bg-white/10 hover:bg-white/20 flex items-center justify-center font-bold text-xs transition select-none">-</button>
+                                <span class="font-mono text-amber-300 w-8 text-center text-[9px] font-extrabold" x-text="cp.time.toFixed(1) + 's'"></span>
+                                <button @click="adjustCheckpoint(idx, 0.5)" class="w-5.5 h-5.5 rounded-md bg-white/10 hover:bg-white/20 flex items-center justify-center font-bold text-xs transition select-none">+</button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <div class="flex items-center justify-between pt-1.5 border-t border-white/5 text-[9px]">
+                    <button @click="resetCheckpoints()" class="bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 font-extrabold px-3 py-1.5 rounded-xl transition">
+                        Reset Bawaan
+                    </button>
+                    <button @click="copyCheckpoints()" class="bg-amber-400 hover:bg-amber-500 text-emerald-950 font-extrabold px-3 py-1.5 rounded-xl transition flex items-center space-x-1">
+                        <i class="fa-solid fa-copy"></i>
+                        <span>Salin Konfigurasi</span>
+                    </button>
                 </div>
             </div>
         </div>
