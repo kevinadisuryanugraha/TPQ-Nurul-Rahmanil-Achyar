@@ -242,7 +242,7 @@
 
     <!-- Bottom Sheet Drawer Modal -->
     <div x-show="openId !== null" 
-        class="absolute top-0 left-0 right-0 bottom-[-80px] z-50 flex items-end justify-center bg-gray-900/60 backdrop-blur-xs" 
+        class="absolute inset-0 z-50 flex items-end justify-center bg-gray-900/60 backdrop-blur-xs" 
         x-transition:enter="transition ease-out duration-300"
         x-transition:enter-start="opacity-0"
         x-transition:enter-end="opacity-100"
