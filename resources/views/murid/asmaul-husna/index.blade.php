@@ -189,48 +189,51 @@
     </div>
 
     <!-- Grid Cards Asmaul Husna -->
-    <div class="grid grid-cols-2 gap-4 animate-[fadeIn_0.4s_ease-out]">
+    <div class="grid grid-cols-3 gap-2.5 animate-[fadeIn_0.4s_ease-out]">
         @forelse($names as $name)
             <div data-asma-item x-show="filterName('{{ addslashes($name->latin) }}', '{{ addslashes($name->arti) }}', '{{ addslashes($name->arab) }}')" x-transition
                 @click="openId = {{ $name->id }}"
-                class="bg-white rounded-2xl border p-3 flex flex-col justify-between shadow-xs transition duration-300 relative cursor-pointer select-none hover:shadow-md hover:scale-[1.01] overflow-hidden"
+                class="bg-white rounded-xl border p-2 flex flex-col justify-between shadow-xs transition duration-300 relative cursor-pointer select-none hover:shadow-md hover:scale-[1.01] overflow-hidden"
                 :class="activeHighlightId === {{ $name->urutan }} ? 'border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-50/10' : 'border-gray-100'">
                 
-                <!-- Floating Play Button (Top-Left) -->
-                <button @click.stop="playIndividual({{ $name->urutan }})" 
-                    class="absolute top-2.5 left-2.5 w-6.5 h-6.5 rounded-full flex items-center justify-center shrink-0 border transition duration-300 focus:outline-none z-10 shadow-xs"
-                    :class="playingIndividualId === {{ $name->urutan }} && individualPlaying 
-                        ? 'bg-amber-400 border-amber-400 text-emerald-950 animate-pulse font-bold' 
-                        : 'bg-emerald-50 border-emerald-100 text-emerald-700 hover:bg-emerald-100/80'">
-                    <template x-if="playingIndividualId === {{ $name->urutan }} && individualPlaying">
-                        <i class="fa-solid fa-pause text-[8px]"></i>
-                    </template>
-                    <template x-if="playingIndividualId !== {{ $name->urutan }} || !individualPlaying">
-                        <i class="fa-solid fa-play text-[8px] pl-0.5"></i>
-                    </template>
-                </button>
+                <!-- Card Header (Play Button & Number) -->
+                <div class="flex items-center justify-between mb-1.5 z-10">
+                    <!-- Mini Play Button -->
+                    <button @click.stop="playIndividual({{ $name->urutan }})" 
+                        class="w-5.5 h-5.5 rounded-full flex items-center justify-center shrink-0 border transition duration-300 focus:outline-none shadow-xs"
+                        :class="playingIndividualId === {{ $name->urutan }} && individualPlaying 
+                            ? 'bg-amber-400 border-amber-400 text-emerald-950 animate-pulse font-bold' 
+                            : 'bg-emerald-50 border-emerald-100 text-emerald-700 hover:bg-emerald-100/80'">
+                        <template x-if="playingIndividualId === {{ $name->urutan }} && individualPlaying">
+                            <i class="fa-solid fa-pause text-[7px]"></i>
+                        </template>
+                        <template x-if="playingIndividualId !== {{ $name->urutan }} || !individualPlaying">
+                            <i class="fa-solid fa-play text-[7px] pl-0.5"></i>
+                        </template>
+                    </button>
 
-                <!-- Sequence Badge (Top-Right) -->
-                <span class="absolute top-2.5 right-2.5 px-1.5 py-0.5 rounded-md bg-gray-50 border border-gray-100 text-gray-400 font-bold text-[8px]">
-                    {{ $name->urutan }}
-                </span>
+                    <!-- Sequence Number -->
+                    <span class="text-[8px] font-extrabold text-gray-400 px-1 py-0.5 rounded bg-gray-50 border border-gray-100 leading-none">
+                        {{ $name->urutan }}
+                    </span>
+                </div>
 
                 <!-- Dome Arch containing Arabic Calligraphy -->
-                <div class="border border-amber-200/50 rounded-t-full mt-6 p-4 flex flex-col items-center justify-center bg-gray-50/40 relative aspect-[4/5] w-full">
-                    <h3 class="arabic-text text-3xl font-bold text-emerald-950 leading-none select-none">{{ $name->arab }}</h3>
+                <div class="border border-amber-200/50 rounded-t-full p-2 flex flex-col items-center justify-center bg-gray-50/40 relative aspect-[5/6] w-full">
+                    <h3 class="arabic-text text-2xl font-bold text-emerald-950 leading-none select-none">{{ $name->arab }}</h3>
                 </div>
 
                 <!-- Divider -->
-                <div class="border-b border-gray-100 my-2"></div>
+                <div class="border-b border-gray-100 my-1.5"></div>
 
                 <!-- Text Info -->
                 <div class="text-center space-y-0.5">
-                    <span class="text-xs font-black text-gray-900 block leading-tight">{{ $name->latin }}</span>
-                    <p class="text-[9px] text-gray-500 font-semibold leading-tight line-clamp-1" title="{{ $name->arti }}">{{ $name->arti }}</p>
+                    <span class="text-[10px] font-black text-gray-900 block leading-tight truncate">{{ $name->latin }}</span>
+                    <p class="text-[8px] text-gray-500 font-semibold leading-tight line-clamp-1 truncate" title="{{ $name->arti }}">{{ $name->arti }}</p>
                 </div>
             </div>
         @empty
-            <div class="col-span-2 bg-white rounded-2xl border border-gray-100 p-8 text-center text-gray-400">
+            <div class="col-span-3 bg-white rounded-2xl border border-gray-100 p-8 text-center text-gray-400">
                 <i class="fa-solid fa-kaaba text-3xl text-gray-300 mb-2"></i>
                 <p class="text-xs">Data Asmaul Husna tidak tersedia.</p>
             </div>
