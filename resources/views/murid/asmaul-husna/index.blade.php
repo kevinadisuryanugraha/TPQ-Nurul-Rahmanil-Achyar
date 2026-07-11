@@ -252,7 +252,7 @@
         x-cloak>
         
         <div @click.outside="openId = null" 
-            class="bg-white rounded-t-3xl w-full p-6 space-y-5 shadow-2xl border-t border-gray-150 relative transform transition-transform duration-300"
+            class="bg-white rounded-t-3xl w-full p-6 space-y-4 shadow-2xl border-t border-gray-150 relative transform transition-transform duration-300 flex flex-col max-h-[85vh]"
             x-transition:enter="transition ease-out duration-300"
             x-transition:enter-start="translate-y-full"
             x-transition:enter-end="translate-y-0"
@@ -261,47 +261,53 @@
             x-transition:leave-end="translate-y-full">
             
             <!-- Close Indicator Bar -->
-            <div class="w-12 h-1 bg-gray-200 rounded-full mx-auto -mt-2 mb-3 cursor-pointer" @click="openId = null"></div>
+            <div class="w-12 h-1 bg-gray-200 rounded-full mx-auto -mt-2 mb-2 cursor-pointer" @click="openId = null"></div>
 
-            <!-- Drawer Content -->
-            @foreach($names as $name)
-                <div x-show="openId === {{ $name->id }}" class="space-y-4 text-center">
-                    <!-- Header Calligraphy -->
-                    <div class="py-4 bg-emerald-50/20 border border-emerald-100/50 rounded-2xl relative overflow-hidden">
-                        <h4 class="arabic-text text-5xl font-black text-emerald-950">{{ $name->arab }}</h4>
+            <!-- Scrollable Drawer Content -->
+            <div class="flex-1 overflow-y-auto space-y-4 pr-1 scrollbar-thin">
+                @foreach($names as $name)
+                    <div x-show="openId === {{ $name->id }}" class="space-y-4 text-center">
+                        <!-- Header Calligraphy -->
+                        <div class="py-4 bg-emerald-50/20 border border-emerald-100/50 rounded-2xl relative overflow-hidden">
+                            <h4 class="arabic-text text-5xl font-black text-emerald-950">{{ $name->arab }}</h4>
+                        </div>
+                        
+                        <!-- Latin & Arti -->
+                        <div>
+                            <h3 class="text-xl font-black text-gray-900">{{ $name->latin }}</h3>
+                            <span class="text-xs font-bold text-amber-600">Nama Ke-{{ $name->urutan }} • {{ $name->arti }}</span>
+                        </div>
+
+                        <!-- Divider -->
+                        <div class="border-b border-gray-100"></div>
+
+                        <!-- Deskripsi -->
+                        <div class="text-left bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                            <span class="text-[9px] font-black text-gray-400 block uppercase tracking-wider mb-1">Khasiat & Penjelasan</span>
+                            <p class="text-xs text-gray-700 leading-relaxed">{{ $name->deskripsi }}</p>
+                        </div>
                     </div>
-                    
-                    <!-- Latin & Arti -->
-                    <div>
-                        <h3 class="text-xl font-black text-gray-900">{{ $name->latin }}</h3>
-                        <span class="text-xs font-bold text-amber-600">Nama Ke-{{ $name->urutan }} • {{ $name->arti }}</span>
-                    </div>
+                @endforeach
+            </div>
 
-                    <!-- Divider -->
-                    <div class="border-b border-gray-100"></div>
-
-                    <!-- Deskripsi -->
-                    <div class="text-left bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                        <span class="text-[9px] font-black text-gray-400 block uppercase tracking-wider mb-1">Khasiat & Penjelasan</span>
-                        <p class="text-xs text-gray-700 leading-relaxed">{{ $name->deskripsi }}</p>
-                    </div>
-
-                    <!-- Action Play Button inside Modal -->
-                    <div class="pt-2 flex items-center justify-center space-x-3">
+            <!-- Fixed Footer Actions -->
+            <div class="pt-2 border-t border-gray-100">
+                @foreach($names as $name)
+                    <div x-show="openId === {{ $name->id }}" class="flex items-center justify-center space-x-3 w-full">
                         <button @click="playIndividual({{ $name->urutan }})" 
-                            class="w-full py-3.5 rounded-2xl font-extrabold text-xs flex items-center justify-center space-x-2 transition"
+                            class="flex-1 py-3.5 rounded-2xl font-extrabold text-xs flex items-center justify-center space-x-2 transition"
                             :class="playingIndividualId === {{ $name->urutan }} && individualPlaying 
                                 ? 'bg-rose-600 hover:bg-rose-700 text-white' 
                                 : 'bg-emerald-700 hover:bg-emerald-800 text-white'">
                             <i class="fa-solid" :class="playingIndividualId === {{ $name->urutan }} && individualPlaying ? 'fa-pause' : 'fa-play'"></i>
                             <span x-text="playingIndividualId === {{ $name->urutan }} && individualPlaying ? 'Jeda Suara' : 'Putar Pelafalan'"></span>
                         </button>
-                        <button @click="openId = null" class="bg-gray-100 hover:bg-gray-200 text-gray-800 font-extrabold text-xs px-5 py-3.5 rounded-2xl transition">
+                        <button @click="openId = null" class="bg-gray-100 hover:bg-gray-200 text-gray-800 font-extrabold text-xs px-5 py-3.5 rounded-2xl transition shrink-0">
                             Tutup
                         </button>
                     </div>
-                </div>
-            @endforeach
+                @endforeach
+            </div>
         </div>
     </div>
 </div>
