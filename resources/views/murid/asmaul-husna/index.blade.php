@@ -39,18 +39,42 @@
         });
     },
 
-    // Getter Penentu Highlight Aktif
+    // Getter Penentu Highlight Aktif (Piecewise Linear Interpolation)
     get activeHighlightId() {
         if (this.individualPlaying) {
             return this.playingIndividualId;
         }
         if (this.fullPlaying && this.fullDuration > 20) {
-            const intro = 12; // Intro & Preamble Hijjaz (12 detik sebelum nama pertama 'Ar-Rahman')
-            const activeDuration = 170; // Nama 1-99 dinyanyikan selama 170 detik (hingga detik 182 / 3:02)
-            if (this.fullCurrentTime < intro) return null;
-            const pct = (this.fullCurrentTime - intro) / activeDuration;
-            const index = Math.floor(pct * 99) + 1;
-            return Math.min(99, Math.max(1, index));
+            const time = this.fullCurrentTime;
+            
+            // Hand-timed checkpoints for Hijjaz Asmaul Husna vocal segments
+            const checkpoints = [
+                { id: 1, time: 12.0 },
+                { id: 10, time: 27.0 },
+                { id: 20, time: 43.0 },
+                { id: 30, time: 58.0 },
+                { id: 40, time: 73.0 },
+                { id: 50, time: 88.0 },
+                { id: 60, time: 104.0 },
+                { id: 70, time: 121.0 },
+                { id: 80, time: 139.0 },
+                { id: 90, time: 158.0 },
+                { id: 99, time: 182.0 }
+            ];
+
+            if (time < checkpoints[0].time) return null;
+            if (time >= checkpoints[checkpoints.length - 1].time) return null; // Outro / Doa
+
+            // Find matching segment
+            for (let i = 0; i < checkpoints.length - 1; i++) {
+                const start = checkpoints[i];
+                const end = checkpoints[i + 1];
+                if (time >= start.time && time < end.time) {
+                    const pct = (time - start.time) / (end.time - start.time);
+                    const index = Math.floor(start.id + pct * (end.id - start.id));
+                    return Math.min(99, Math.max(1, index));
+                }
+            }
         }
         return null;
     },
