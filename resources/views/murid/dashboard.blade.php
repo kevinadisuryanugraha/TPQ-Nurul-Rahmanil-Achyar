@@ -432,6 +432,18 @@
                     }
                 }
 
+                // Robust minute-matching trigger to prevent timer drift/skip bugs
+                const nowHourMin = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                targetPrayers.forEach(name => {
+                    if (this.prayerTimes[name] === nowHourMin) {
+                        const prayerId = `${currentDate}_${name}`;
+                        if (this.lastTriggeredPrayer !== prayerId) {
+                            this.lastTriggeredPrayer = prayerId;
+                            this.triggerAdzanNotification(this.translatePrayerName(name));
+                        }
+                    }
+                });
+
                 this.nextPrayer.countdownStr = this.formatTimeDiff(diffMs);
             },
 
