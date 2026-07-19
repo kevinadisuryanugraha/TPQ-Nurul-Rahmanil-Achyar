@@ -7,7 +7,7 @@ Before coding, read `GUIDELINE.md` — it is the single source of truth for arch
 ## Quick start
 
 ```bash
-composer run setup        # full first-time setup (composer install → .env → key:generate → migrate → npm ci --ignore-scripts → npm run build)
+composer run setup        # full first-time setup (composer install → .env → key:generate → migrate → npm install --ignore-scripts → npm run build)
 composer run dev          # PHP server + queue + logs + Vite HMR concurrently
 composer run test         # runs config:clear then phpunit
 php artisan test --filter=SomeTest
@@ -57,7 +57,7 @@ Route names follow: `superadmin.*`, `admin.*`, `murid.*`, `admin.landing.*`, `ad
 - PHPUnit with SQLite `:memory:` (configured in `phpunit.xml`)
 - Suites: `tests/Unit`, `tests/Feature`
 - Factories: `UserFactory`, `PendaftarFactory`, `LevelFactory`
-- Tests cover: auth, admin CRUD (murid, absensi, penilaian, konten, pengumuman, laporan, flashcard), PSB flow, public routes, gamification, WhatsApp notifications
+- Tests cover: auth, admin CRUD (murid, absensi, penilaian, konten, pengumuman, laporan, flashcard), PSB flow, public routes, gamification, WhatsApp notifications, profile
 - Admin tests create admin via `Admin::create(...)` (no factory); User via `User::factory()`
 - Level factory is required in setup for any test using `actingAs($user, 'web')`
 
@@ -76,16 +76,17 @@ LevelSeeder → DefaultAdminSeeder → QuranSeeder → DoaSeeder → HadistSeede
 - **PWA**: custom service worker at `public/sw.js` (no npm package, no Workbox)
 - **Scroll-reveal**: public layout has `.reveal` and `.reveal-delay-{1..4}` CSS classes for landing page animations
 - `.npmrc` sets `ignore-scripts=true` — npm scripts must be run explicitly
+- **Tailwind CSS**: no custom colors in config — uses emerald, amber, stone, gray from default palette
 
 ## Key packages
 
-- `spatie/laravel-permission` — both guards
+- `spatie/laravel-permission` ^8.0 — both guards
 - `livewire/livewire` ^4.3 — admin only (do NOT install on murid portal)
-- `barryvdh/laravel-dompdf` — PDF exports
+- `barryvdh/laravel-dompdf` ^3.1 — PDF exports
 - `maatwebsite/excel` ^3.1 — Excel exports via `MuridExport` and `KelasRecapExport`
 - `intervention/image` ^4.1 — image resize/compress
-- `mews/purifier` — HTML sanitization (TipTap content)
-- `@tiptap/core` + starter-kit — rich text editor (cerita, panduan)
+- `mews/purifier` ^3.4 — HTML sanitization (TipTap content)
+- `@tiptap/core` ^3.27 + starter-kit — rich text editor (cerita, panduan)
 
 ## References
 
